@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="11762" systemVersion="16D32" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="Bnk-9Y-Vyh">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11757"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--BTCardViewViewController-->
+        <scene sceneID="EaU-jY-7Vq">
+            <objects>
+                <viewController storyboardIdentifier="BTCardViewController" useStoryboardIdentifierAsRestorationIdentifier="YES" id="Bnk-9Y-Vyh" userLabel="BTCardViewViewController" customClass="BTCardViewController" customModule="BTCardViewController" customModuleProvider="target" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="ZSD-yN-IXW"/>
+                        <viewControllerLayoutGuide type="bottom" id="FbH-31-tZQ"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="khR-da-hzN">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="galaxy" translatesAutoresizingMaskIntoConstraints="NO" id="1N4-hk-NoP">
+                                <rect key="frame" x="0.0" y="0.0" width="1024" height="667"/>
+                            </imageView>
+                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" alwaysBounceHorizontal="YES" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" translatesAutoresizingMaskIntoConstraints="NO" id="gty-hm-vQy">
+                                <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                                <subviews>
+                                    <view contentMode="scaleToFill" placeholderIntrinsicWidth="880" placeholderIntrinsicHeight="667" translatesAutoresizingMaskIntoConstraints="NO" id="ete-aR-KmP" userLabel="ContentView">
+                                        <rect key="frame" x="0.0" y="0.0" width="880" height="667"/>
+                                        <subviews>
+                                            <view contentMode="scaleToFill" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="zJL-9n-6y6" userLabel="Dummy view 1">
+                                                <rect key="frame" x="32" y="205.5" width="200" height="320"/>
+                                                <color key="backgroundColor" white="0.66666666669999997" alpha="0.75" colorSpace="calibratedWhite"/>
+                                                <constraints>
+                                                    <constraint firstAttribute="height" constant="320" identifier="DummyViewHeight" id="8kc-Ld-zyP" userLabel="DummyViewHeight1"/>
+                                                    <constraint firstAttribute="width" constant="200" identifier="DummyViewWidth1" id="Ikl-8p-QTO" userLabel="DummyViewWidth1"/>
+                                                </constraints>
+                                            </view>
+                                            <view contentMode="scaleToFill" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="HTn-2r-O13" userLabel="Dummy view 2">
+                                                <rect key="frame" x="248" y="205.5" width="200" height="320"/>
+                                                <color key="backgroundColor" white="0.66666666669999997" alpha="0.75" colorSpace="calibratedWhite"/>
+                                                <constraints>
+                                                    <constraint firstAttribute="height" constant="320" identifier="DummyViewHeight2" id="1Yr-9I-xDz" userLabel="DummyViewHeight2"/>
+                                                    <constraint firstAttribute="width" constant="200" identifier="DummyViewWidth2" id="L7y-1H-5WF" userLabel="DummyViewWidth2"/>
+                                                </constraints>
+                                            </view>
+                                            <view contentMode="scaleToFill" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="JVm-V3-8NN" userLabel="Dummy view 3">
+                                                <rect key="frame" x="464" y="205.5" width="200" height="320"/>
+                                                <color key="backgroundColor" white="0.66666666669999997" alpha="0.75" colorSpace="calibratedWhite"/>
+                                                <constraints>
+                                                    <constraint firstAttribute="width" constant="200" identifier="DummyViewWidth3" id="fce-OX-p3A" userLabel="DummyViewWidth3"/>
+                                                    <constraint firstAttribute="height" constant="320" identifier="DummyViewHeight3" id="jWR-Ic-Oa9" userLabel="DummyViewHeight3"/>
+                                                </constraints>
+                                            </view>
+                                            <view contentMode="scaleToFill" horizontalCompressionResistancePriority="1000" verticalCompressionResistancePriority="1000" translatesAutoresizingMaskIntoConstraints="NO" id="Wna-FR-HYL" userLabel="Dummy view 4">
+                                                <rect key="frame" x="680" y="205.5" width="200" height="320"/>
+                                                <color key="backgroundColor" white="0.66666666669999997" alpha="0.75" colorSpace="calibratedWhite"/>
+                                                <constraints>
+                                                    <constraint firstAttribute="width" constant="200" identifier="DummyViewWidth4" id="Eaz-hb-bhW" userLabel="DummyViewWidth4"/>
+                                                    <constraint firstAttribute="height" constant="320" identifier="DummyViewHeight4" id="fMS-bv-Srp" userLabel="DummyViewHeight4"/>
+                                                </constraints>
+                                            </view>
+                                        </subviews>
+                                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                        <constraints>
+                                            <constraint firstItem="JVm-V3-8NN" firstAttribute="leading" secondItem="HTn-2r-O13" secondAttribute="trailing" constant="16" identifier="DummyViewLeading3" id="000-bm-87Y" userLabel="DummyViewLeading3"/>
+                                            <constraint firstItem="Wna-FR-HYL" firstAttribute="leading" secondItem="JVm-V3-8NN" secondAttribute="trailing" constant="16" identifier="DummyViewLeading4" id="0kj-ds-pE7" userLabel="DummyViewLeading4"/>
+                                            <constraint firstItem="Wna-FR-HYL" firstAttribute="centerY" secondItem="ete-aR-KmP" secondAttribute="centerY" constant="32" identifier="DummyViewCenter4" id="AMt-Co-GyV" userLabel="DummyViewCenter4"/>
+                                            <constraint firstItem="HTn-2r-O13" firstAttribute="leading" secondItem="zJL-9n-6y6" secondAttribute="trailing" constant="16" identifier="DummyViewLeading2" id="fnH-dc-6fH" userLabel="DummyViewLeading2"/>
+                                            <constraint firstItem="JVm-V3-8NN" firstAttribute="centerY" secondItem="ete-aR-KmP" secondAttribute="centerY" constant="32" identifier="DummyViewCenter3" id="hdR-Q8-XLZ" userLabel="DummyViewCenter3"/>
+                                            <constraint firstItem="HTn-2r-O13" firstAttribute="centerY" secondItem="ete-aR-KmP" secondAttribute="centerY" constant="32" identifier="DummyViewCenter2" id="k54-Bd-V5j" userLabel="DummyViewCenter2"/>
+                                            <constraint firstAttribute="trailing" secondItem="Wna-FR-HYL" secondAttribute="trailing" id="t13-Xt-Qop"/>
+                                            <constraint firstItem="zJL-9n-6y6" firstAttribute="centerY" secondItem="ete-aR-KmP" secondAttribute="centerY" constant="32" identifier="DummyViewCenter1" id="tMl-rE-KJ7" userLabel="DummyViewCenter1"/>
+                                            <constraint firstItem="zJL-9n-6y6" firstAttribute="leading" secondItem="ete-aR-KmP" secondAttribute="leading" constant="32" identifier="DummyViewLeading1" id="tVX-hZ-yMy" userLabel="DummyViewLeading1"/>
+                                        </constraints>
+                                    </view>
+                                </subviews>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
+                                <constraints>
+                                    <constraint firstAttribute="trailing" secondItem="ete-aR-KmP" secondAttribute="trailing" identifier="ContentViewTrailing" id="3Qc-ji-6hC" userLabel="ContentViewTrailing"/>
+                                    <constraint firstAttribute="bottom" secondItem="ete-aR-KmP" secondAttribute="bottom" identifier="ContentViewBottom" id="gSV-oi-VQd" userLabel="ContentViewBottom"/>
+                                    <constraint firstItem="ete-aR-KmP" firstAttribute="leading" secondItem="gty-hm-vQy" secondAttribute="leading" identifier="ContentViewLeading" id="sVK-xy-U19" userLabel="ContentViewLeading"/>
+                                    <constraint firstItem="ete-aR-KmP" firstAttribute="top" secondItem="gty-hm-vQy" secondAttribute="top" identifier="ContentViewTop" id="yAu-pq-hC1" userLabel="ContentViewTop"/>
+                                </constraints>
+                                <connections>
+                                    <outlet property="delegate" destination="Bnk-9Y-Vyh" id="b1n-Wu-ID9"/>
+                                </connections>
+                            </scrollView>
+                        </subviews>
+                        <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstAttribute="trailing" secondItem="gty-hm-vQy" secondAttribute="trailing" identifier="ScrollViewTrailing" id="0fn-91-gFv" userLabel="ScrollViewTrailing"/>
+                            <constraint firstItem="1N4-hk-NoP" firstAttribute="top" secondItem="khR-da-hzN" secondAttribute="top" identifier="BackgroudImageTop" id="A5f-A0-fgc" userLabel="BackgroudImageTop"/>
+                            <constraint firstItem="1N4-hk-NoP" firstAttribute="leading" secondItem="khR-da-hzN" secondAttribute="leading" id="Dff-f3-mzx" userLabel="BackgroundImageViewLeading"/>
+                            <constraint firstAttribute="bottom" secondItem="gty-hm-vQy" secondAttribute="bottom" identifier="ScrollViewBottom" id="DtA-aM-Prd" userLabel="ScrollViewBottom"/>
+                            <constraint firstAttribute="bottom" secondItem="1N4-hk-NoP" secondAttribute="bottom" identifier="BackgroudImageBottom" id="hOC-2i-8y5" userLabel="BackgroudImageBottom"/>
+                            <constraint firstItem="ete-aR-KmP" firstAttribute="height" secondItem="khR-da-hzN" secondAttribute="height" id="iX2-1E-btQ"/>
+                            <constraint firstItem="gty-hm-vQy" firstAttribute="leading" secondItem="khR-da-hzN" secondAttribute="leading" identifier="ScrollViewLeading" id="lcH-jP-yF9" userLabel="ScrollViewLeading"/>
+                            <constraint firstAttribute="trailing" relation="lessThanOrEqual" secondItem="1N4-hk-NoP" secondAttribute="trailing" id="tpm-hU-Yo3" userLabel="BackgroundImageViewLeadingTrailing"/>
+                            <constraint firstItem="gty-hm-vQy" firstAttribute="top" secondItem="khR-da-hzN" secondAttribute="top" identifier="ScrollViewTop" id="wbX-Br-Yni" userLabel="ScrollViewTop"/>
+                        </constraints>
+                        <connections>
+                            <outletCollection property="gestureRecognizers" destination="x0p-aA-VaJ" appends="YES" id="2Py-S7-bQ6"/>
+                        </connections>
+                    </view>
+                    <navigationItem key="navigationItem" id="FRO-u7-JNR"/>
+                    <userDefinedRuntimeAttributes>
+                        <userDefinedRuntimeAttribute type="number" keyPath="spacing">
+                            <real key="value" value="8"/>
+                        </userDefinedRuntimeAttribute>
+                    </userDefinedRuntimeAttributes>
+                    <connections>
+                        <outlet property="backgroundImageLeading" destination="Dff-f3-mzx" id="iPW-vB-Abf"/>
+                        <outlet property="backgroundImageView" destination="1N4-hk-NoP" id="26W-89-5oT"/>
+                        <outlet property="contentView" destination="ete-aR-KmP" id="qfy-Le-d4b"/>
+                        <outlet property="scrollView" destination="gty-hm-vQy" id="bvB-Qa-Imb"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="FFd-Pf-WE3" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <panGestureRecognizer minimumNumberOfTouches="1" id="x0p-aA-VaJ">
+                    <connections>
+                        <action selector="handlePanGestureWithRecognizer:" destination="Bnk-9Y-Vyh" id="IAW-Mu-rlc"/>
+                        <outlet property="delegate" destination="Bnk-9Y-Vyh" id="BdD-Xa-tQj"/>
+                    </connections>
+                </panGestureRecognizer>
+            </objects>
+            <point key="canvasLocation" x="592.79999999999995" y="26.53673163418291"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="galaxy" width="1024" height="1024"/>
+    </resources>
+</document>
