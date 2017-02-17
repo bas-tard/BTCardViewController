@@ -221,7 +221,26 @@ import ObjectiveC
 		_spacing = newValue
 
 		if (self.isViewLoaded) {
-			updateConstraintsAndLayout(animated: animated)
+			self.view.setNeedsUpdateConstraints()
+			self.view.setNeedsLayout()
+
+			if (animated) {
+				UIView.animate(
+					withDuration: self.animationDuration,
+					animations: {
+						self.view.updateConstraintsIfNeeded()
+						self.view.layoutIfNeeded()
+
+						self.resetContentOffset()
+					}
+				)
+			} else {
+
+				self.view.updateConstraintsIfNeeded()
+				self.view.layoutIfNeeded()
+				self.resetContentOffset()
+
+			}
 		}
 	}
 
@@ -415,35 +434,7 @@ import ObjectiveC
 			NSLayoutConstraint.activate(constraints)
 		}
 
-		currentView.setNeedsLayout()
-	}
-
-	internal func updateConstraintsAndLayout(animated: Bool)
-	{
-		if (!self.isViewLoaded) {
-			return
-		}
-
-		// Run any pending layouts that are needed
-		self.view.layoutIfNeeded()
-
-		// We can not update the constraints
-		self.view.setNeedsUpdateConstraints()
-		self.view.updateConstraintsIfNeeded()
-
-		if (animated) {
-			UIView.animate(
-				withDuration: self.animationDuration,
-				delay: 0.0,
-				options: .layoutSubviews,
-				animations: {
-					self.resetContentOffset()
-				},
-				completion: nil
-			)
-		} else {
-			self.resetContentOffset()
-		}
+		currentView.setNeedsUpdateConstraints()
 	}
 
 	internal func resetContentOffset()
@@ -629,9 +620,7 @@ import ObjectiveC
 					t = t.scaledBy(x: 0.5, y: 0.5)
 					removedCard.view.transform = t
 				},
-				completion: { _ in
-					removedCard.view.removeFromSuperview()
-				}
+				completion: nil
 			)
 
 		} else {
@@ -706,10 +695,13 @@ import ObjectiveC
 			return
 		}
 
+		// Don't use self.viewControllers here as it will trigger it's own layout pass
+		_viewControllers.insert(newCard, at: index)
+
 		if (animated) {
-			var rect = CGRect()
 
 			// Define the location where it should go
+			var rect = CGRect()
 			if (index < self.viewControllers.count) {
 				let card = self.viewControllers[index];
 				rect = card.view.frame
@@ -720,43 +712,35 @@ import ObjectiveC
 				rect.origin.x += self.spacing
 			}
 			rect.size = newCard.view.frame.size
-			newCard.view.frame = rect
 
+			newCard.view.translatesAutoresizingMaskIntoConstraints = true;
+			newCard.view.frame = rect
 			self.contentView.addSubview(newCard.view)
 
 			// Now, scale it and translate it
-			let priorAlpha = newCard.view.alpha
-			newCard.view.alpha = 0
-//			var t = CGAffineTransform(
-//				translationX: 0,
-//				y: 0 - self.view.bounds.height
-//			)
-////			t = t.scaledBy(x: 0.5, y: 0.5)
-//			newCard.view.transform = t
-
-			// Now we can add the new card
-			self.viewControllers.insert(newCard, at: index)
+			var t = CGAffineTransform(
+				translationX: 0,
+				y: 0 - self.view.bounds.height
+			)
+			t = t.scaledBy(x: 0.5, y: 0.5)
+			newCard.view.transform = t
 
 			UIView.animate(
 				withDuration: self.animationDuration,
 				delay: 0,
 				options: .curveEaseOut,
 				animations: {
-//					newCard.view.transform = CGAffineTransform.identity
-					newCard.view.alpha = priorAlpha
+					newCard.view.transform = CGAffineTransform.identity
+					newCard.view.translatesAutoresizingMaskIntoConstraints = false;
 
-					// Force a layout NOW to animate where everything should go
 					self.view.setNeedsLayout()
 					self.view.setNeedsUpdateConstraints()
-					self.view.layoutIfNeeded()
-					self.view.updateConstraintsIfNeeded()
 				},
-				completion: { _ in
-				}
+				completion: nil
 			)
 		} else {
-			self.viewControllers.insert(newCard, at: index)
 			self.contentView.addSubview(newCard.view)
+
 			self.view.setNeedsLayout()
 			self.view.setNeedsUpdateConstraints()
 		}
