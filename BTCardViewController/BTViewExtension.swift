@@ -138,16 +138,27 @@ public class BTCardView : UIView
 		{
 			if (self.superview != nil) {
 				self.computeBoundsWithMargins()
-				self.setupDebugBorder()
+//				self.setupDebugBorder()
 			}
 		}
 	}
 
+	public override var frame: CGRect
+		{
+		didSet
+		{
+			if (self.superview != nil) {
+				self.computeBoundsWithMargins()
+//				self.setupDebugBorder()
+			}
+		}
+	}
+	
 	public override func didMoveToSuperview()
 	{
 		if (self.superview != nil) {
 			self.computeBoundsWithMargins()
-			self.setupDebugBorder()
+//			self.setupDebugBorder()
 		}
 	}
 
@@ -156,7 +167,7 @@ public class BTCardView : UIView
 
 		if (self.superview != nil) {
 			self.computeBoundsWithMargins()
-			self.setupDebugBorder()
+//			self.setupDebugBorder()
 		}
 	}
 
@@ -174,7 +185,5 @@ public class BTCardView : UIView
 		if let rect = self.boundsWithMargins {
 			border.frame = rect
 		}
-
-		border.setNeedsLayout()
 	}
 }

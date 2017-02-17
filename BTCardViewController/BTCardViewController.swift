@@ -36,7 +36,7 @@ import ObjectiveC
 		_spacing = 8
 		_backgroundImage = nil
 		_viewControllers = []
-		_selectedIndex = nil
+		_selectedIndex = 0
 		super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
 	}
 
@@ -45,7 +45,7 @@ import ObjectiveC
 		_spacing = 8
 		_backgroundImage = nil
 		_viewControllers = []
-		_selectedIndex = nil
+		_selectedIndex = 0
 		super.init(coder: aDecoder)
 	}
 
@@ -219,8 +219,8 @@ import ObjectiveC
 
 // MARK: Selected Index
 
-	private var _selectedIndex : Int?
-	open var selectedIndex : Int?
+	private var _selectedIndex : Int!
+	open var selectedIndex : Int!
 	{
 		set
 		{
@@ -233,12 +233,13 @@ import ObjectiveC
 		}
 	}
 
-	open func setSelectedIndex(_ newValue: Int?, animated: Bool)
+	open func setSelectedIndex(_ newValue: Int!, animated: Bool)
 	{
-		if (newValue != nil) {
-			if (newValue! < 0 || newValue! >= self.viewControllers.count) {
-				return
-			}
+		if (newValue < 0) {
+			return
+		}
+		if (newValue >= self.viewControllers.count) {
+			return
 		}
 
 		_selectedIndex = newValue
@@ -411,11 +412,13 @@ import ObjectiveC
 			self.contentView.addConstraints(constraints)
 			NSLayoutConstraint.activate(constraints)
 		}
+
+		currentView.setNeedsLayout()
 	}
 
 	internal func updateConstraintsAndLayout(animated: Bool)
 	{
-		if (self.isViewLoaded) {
+		if (!self.isViewLoaded) {
 			return
 		}
 
@@ -426,24 +429,27 @@ import ObjectiveC
 		self.view.setNeedsUpdateConstraints()
 		self.view.updateConstraintsIfNeeded()
 
-		// Compute the new scroll index here
-		let offset = self.offsetForViewControllerAtIndex(at: self.selectedIndex)
-
-		if (animated && offset != nil) {
+		if (animated) {
 			UIView.animate(
 				withDuration: 0.4,
 				delay: 0.0,
 				options: .layoutSubviews,
 				animations: {
-					// We can now layout whatever contraint changes that happened
-					self.view.layoutIfNeeded()
-					self.scrollView.contentOffset = offset!
+					self.resetContentOffset()
 				},
 				completion: nil
 			)
-		} else if (offset != nil) {
-			self.view.layoutIfNeeded()
-			self.scrollView.contentOffset = offset!
+		} else {
+			self.resetContentOffset()
+		}
+	}
+
+	internal func resetContentOffset()
+	{
+		self.view.layoutIfNeeded()
+
+		if let offset = self.offsetForViewControllerAtIndex(at: self.selectedIndex) {
+			self.scrollView.contentOffset = offset
 		}
 	}
 
@@ -472,11 +478,7 @@ import ObjectiveC
 		)
 
 		// Make the selectedIndex valid based on new cards
-		if (self.selectedIndex != nil && self.viewControllers.count > 0) {
-			_selectedIndex = min(self.selectedIndex!, self.viewControllers.count - 1)
-		} else {
-			_selectedIndex = nil
-		}
+		_selectedIndex = min(self.selectedIndex, self.viewControllers.count - 1)
 
 		// Add the view controllers, we will trigger a layout to place them correctly
 		self.setupViewControllers()

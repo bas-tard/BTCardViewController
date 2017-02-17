@@ -76,19 +76,21 @@ class AppDelegate
 		// Extract card view controller from root view controller
 		let navCtrl = self.window?.rootViewController as? UINavigationController
 		self.cardViewController = navCtrl?.topViewController as? BTCardViewController
+		self.cardViewController?.loadView()
+
+		// Set-up the datasource and delegate
+		self.cardViewController?.dataSource = self
+		self.cardViewController?.delegate = self
 
 		// Set-up card view controller attributes
 		self.cardViewController?.backgroundImage = UIImage(
-			named: "rainbow-wood",
+			named: "galaxy",
 			in: Bundle.main,
 			compatibleWith: nil
 		)
 		self.cardViewController?.spacing = 16
-		self.cardViewController?.selectedIndex = 1
-
-		// Finally, set-up the datasource and delegate
-		self.cardViewController?.dataSource = self
-		self.cardViewController?.delegate = self
+		self.cardViewController?.selectedIndex =
+			Int(arc4random_uniform(UInt32(self.items.count)))
 
 		// Set-up the toolbar
 		self.cardViewController?.toolbarItems = [
