@@ -101,9 +101,6 @@
                             <constraint firstAttribute="trailing" relation="lessThanOrEqual" secondItem="1N4-hk-NoP" secondAttribute="trailing" id="tpm-hU-Yo3" userLabel="BackgroundImageViewLeadingTrailing"/>
                             <constraint firstItem="gty-hm-vQy" firstAttribute="top" secondItem="khR-da-hzN" secondAttribute="top" identifier="ScrollViewTop" id="wbX-Br-Yni" userLabel="ScrollViewTop"/>
                         </constraints>
-                        <connections>
-                            <outletCollection property="gestureRecognizers" destination="x0p-aA-VaJ" appends="YES" id="2Py-S7-bQ6"/>
-                        </connections>
                     </view>
                     <navigationItem key="navigationItem" id="FRO-u7-JNR"/>
                     <userDefinedRuntimeAttributes>
@@ -119,12 +116,6 @@
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="FFd-Pf-WE3" userLabel="First Responder" sceneMemberID="firstResponder"/>
-                <panGestureRecognizer minimumNumberOfTouches="1" id="x0p-aA-VaJ">
-                    <connections>
-                        <action selector="handlePanGestureWithRecognizer:" destination="Bnk-9Y-Vyh" id="IAW-Mu-rlc"/>
-                        <outlet property="delegate" destination="Bnk-9Y-Vyh" id="BdD-Xa-tQj"/>
-                    </connections>
-                </panGestureRecognizer>
             </objects>
             <point key="canvasLocation" x="592.79999999999995" y="26.53673163418291"/>
         </scene>

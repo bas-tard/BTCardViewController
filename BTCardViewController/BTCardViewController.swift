@@ -14,7 +14,6 @@ import ObjectiveC
 @objc public class BTCardViewController
 	: UIViewController
 	, UIScrollViewDelegate
-	, UIGestureRecognizerDelegate
 {
 // MARK: Interface Builder Outlets
 
@@ -28,10 +27,14 @@ import ObjectiveC
 	@IBOutlet var backgroundImageView : UIImageView!
 	@IBOutlet var backgroundImageLeading : NSLayoutConstraint!
 
-	private var panCard : UIViewController?
-	private var panOriginalLocation : CGPoint?
-	private var panOriginalFrame : CGRect?
-
+	var animationDuration : TimeInterval
+	{
+		get
+		{
+//			return UIApplication.shared.statusBarOrientationAnimationDuration
+			return 5.0
+		}
+	}
 
 // MARK: Initialization
 
@@ -262,9 +265,8 @@ import ObjectiveC
 			return
 		}
 
-		let offset = self.offsetForViewControllerAtIndex(at: index)
-		if (offset != nil) {
-			self.scrollView.setContentOffset(offset!, animated: animated)
+		if let offset = self.offsetForViewControllerAtIndex(at: index) {
+			self.scrollView.setContentOffset(offset, animated: animated)
 		}
 	}
 
@@ -435,7 +437,7 @@ import ObjectiveC
 
 		if (animated) {
 			UIView.animate(
-				withDuration: 0.4,
+				withDuration: self.animationDuration,
 				delay: 0.0,
 				options: .layoutSubviews,
 				animations: {
@@ -529,133 +531,7 @@ import ObjectiveC
 	}
 
 
-// MARK: Gesture Support
-
-	@IBAction func handlePanGesture(recognizer: UIPanGestureRecognizer)
-	{
-		let location = recognizer.location(in: self.contentView)
-
-		switch recognizer.state {
-		case .possible:
-			break
-
-		case .began:
-			self.panCard = self.viewController(from: recognizer)
-			if (self.panCard == nil) {
-				self.cancelPanGesture(recognizer)
-			} else {
-				self.panOriginalFrame = self.panCard!.view.frame
-				self.panOriginalLocation = location
-			}
-			break
-
-		case .changed:
-			// Move the card (vertically only)
-			if (self.panCard == nil
-				|| self.panOriginalFrame == nil
-				|| self.panOriginalLocation == nil
-			) {
-				self.cancelPanGesture(recognizer)
-			} else {
-				var cardFrame = self.panOriginalFrame!
-				cardFrame.origin.y += self.panOriginalLocation!.y - location.y
-				self.panCard!.view.frame = cardFrame
-			}
-			// TODO
-			break
-
-		// TODO: implement me
-//		case .ended:
-//			break
-
-		case .ended, .cancelled, .failed:
-			// Move back to original position
-			if (self.panCard == nil
-				|| self.panOriginalFrame == nil
-				|| self.panOriginalLocation == nil
-			) {
-				self.cancelPanGesture(recognizer)
-			} else {
-				UIView.animate(
-					withDuration: 0.4,
-					animations: {
-						self.panCard!.view.frame = self.panOriginalFrame!
-					},
-					completion: { _ in
-						self.cancelPanGesture(nil)
-					}
-				)
-			}
-			break
-		}
-		// TODO
-	}
-
-	func cancelPanGesture(_ recognizer : UIPanGestureRecognizer?)
-	{
-		if (recognizer != nil) {
-			recognizer!.isEnabled = false
-			recognizer!.isEnabled = true
-		}
-
-		self.panCard = nil
-		self.panOriginalFrame = nil
-		self.panOriginalLocation = nil
-	}
-
-	internal func viewController(from recognizer: UIGestureRecognizer!) -> UIViewController?
-	{
-		let location = recognizer.location(in: self.contentView)
-
-		// Get the view at the location, but that is based on the
-		// bounds with marging, so we re-recheck using the frame
-		let card = self.viewController(at: location)
-		if (card == nil || !card!.view.frame.contains(location)) {
-			return nil
-		}
-
-		return card
-	}
-
-
-// MARK: UIGestureRecognizerDelegate
-
-	public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool
-	{
-		return false
-//		let panGestureRecognizer = gestureRecognizer as? UIPanGestureRecognizer
-//		if (panGestureRecognizer == nil) {
-//			return false
-//		}
-//
-//		let card = self.viewController(from: gestureRecognizer)
-//
-//		// Only start when we start from an actual card
-//		if (card == gestureRecognizer.view) {
-//			return false
-//		}
-//
-//		let velocity = panGestureRecognizer!.velocity(in: self.view)
-//		let ratio = abs(velocity.y / velocity.x)
-//
-//		// Only start when we mostly go up
-//		if (velocity.y >= 0) {
-//			return false
-//		}
-//
-//		if (velocity.y > -20) {
-//			return false
-//		}
-//
-//		if (ratio < 5.0) {
-//			return false
-//		}
-//
-//		return true
-	}
-
-
-	// MARK: UIScrollViewDelegate Implementation
+// MARK: UIScrollViewDelegate Implementation
 
 	public func scrollViewDidScroll(_ scrollView: UIScrollView) {
 		self.adjustBackgroundImageView()
@@ -686,6 +562,89 @@ import ObjectiveC
 
 		if (offset != nil) {
 			targetContentOffset.pointee = offset!
+		}
+	}
+
+
+// MARK: Card insertion
+
+	public func remove(_ card: UIViewController!)
+	{
+		self.remove(card, animated: false)
+	}
+
+	public func remove(_ card: UIViewController!, animated: Bool)
+	{
+		let index = self.viewControllers.index(of: card)
+		if (index == nil) {
+			return
+		}
+
+		self.remove(at: index!, animated: animated)
+	}
+
+	public func remove(at index: Int!)
+	{
+		self.remove(at: index, animated: false)
+	}
+
+	public func remove(at index: Int!, animated: Bool)
+	{
+		if (index < 0) {
+			return
+		}
+		if (index >= self.viewControllers.count) {
+			return
+		}
+
+		let card = self.viewControllers.remove(at: index)
+
+		if (animated) {
+			// Remove the view from scroll view and add to main view (above background)
+			// Also set translatesAutoresizingMaskIntoConstraints to true
+			var rect = card.view.convert(card.view.bounds, to: self.view)
+			rect.origin.x -= self.scrollView.contentOffset.x
+			card.view.removeFromSuperview()
+			card.view.translatesAutoresizingMaskIntoConstraints = true
+			card.view.frame = rect
+			self.view.insertSubview(card.view, aboveSubview: self.backgroundImageView)
+
+			// Animate the removal and the layout change for the other cards
+			UIView.animate(
+				withDuration: animationDuration,
+				delay: 2,
+				options: .curveEaseInOut,
+				animations: {
+					// Force a layout NOW to animate the other cards
+					self.view.setNeedsLayout()
+					self.view.setNeedsUpdateConstraints()
+					self.view.layoutIfNeeded()
+					self.view.updateConstraintsIfNeeded()
+
+					// Move up and shrink the removed card
+					var t = CGAffineTransform(
+						translationX: 0,
+						y: 0 - self.view.bounds.height
+					)
+					t = t.scaledBy(x: 0.2, y: 0.2)
+					card.view.transform = t
+//
+//					// If we remove an item before the selected index, we need to
+//					// adjust the selected index (which will adjust the scroll offset)
+//					if (index < self.selectedIndex) {
+//						self.setSelectedIndex(self.selectedIndex - 1, animated: false)
+//					}
+				},
+				completion: { _ in
+					card.view.removeFromSuperview()
+				}
+			)
+
+		} else {
+			card.view.removeFromSuperview()
+//			if (index < self.selectedIndex) {
+//				self.selectedIndex = self.selectedIndex - 1
+//			}
 		}
 	}
 
@@ -849,5 +808,13 @@ import ObjectiveC
 		didSelect viewController: UIViewController,
 		at index: Int
 	)
+
+/// MARK: TODO
+    // willRemoveCard
+	// didRemoveCard
+	// willInsertCard
+	// didInsertCard
+	// cardWillMove
+	// cardDidMove
 }
 

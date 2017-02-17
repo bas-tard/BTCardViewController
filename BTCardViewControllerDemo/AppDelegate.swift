@@ -45,9 +45,9 @@ class AppDelegate
 	var window: UIWindow?
 	var cardViewController: BTCardViewController?
 
-	let transparency : CGFloat = 0.5
+	let transparency : CGFloat = 0.333
 
-	var colors: [UIColor]! =
+	let colors: [UIColor]! =
 	[
 		UIColor.red,
 		UIColor.green,
@@ -57,8 +57,18 @@ class AppDelegate
 		UIColor.brown,
 		UIColor.orange,
 	]
+	let titles: [String]! =
+	[
+		"Red",
+		"Green",
+		"Blue",
+		"Magenta",
+		"Cyan",
+		"Brown",
+		"Orange",
+	]
 
-	var items : [UIColor]! = []
+	var items : [Int]! = []
 
 	var cards : [UIViewController?]! = []
 
@@ -92,48 +102,70 @@ class AppDelegate
 		self.cardViewController?.selectedIndex =
 			Int(arc4random_uniform(UInt32(self.items.count)))
 
-		// Set-up the toolbar
-		self.cardViewController?.toolbarItems = [
+		// Set-up the navigation
+		self.cardViewController?.navigationItem.title = "Card Demo"
+		self.cardViewController?.navigationItem.leftBarButtonItems = [
 			UIBarButtonItem(
-				title: "Spacing",
-				style: .plain,
+				barButtonSystemItem: .trash,
 				target: self,
-				action: #selector(randomSpacing)
+				action: #selector(remove(sender:))
 			),
-
+		]
+		self.cardViewController?.navigationItem.rightBarButtonItems = [
 			UIBarButtonItem(
-				barButtonSystemItem: .flexibleSpace,
-				target: nil,
-				action: nil
-			),
-
-			UIBarButtonItem(
-				title: "Index",
-				style: .plain,
+				barButtonSystemItem: .add,
 				target: self,
-				action: #selector(randomIndex)
-			),
-
-			UIBarButtonItem(
-				barButtonSystemItem: .flexibleSpace,
-				target: nil,
-				action: nil
-			),
-
-			UIBarButtonItem(
-				title: "Views",
-				style: .plain,
-				target: self,
-				action: #selector(changeViewControllers)
+				action: #selector(add(sender:))
 			),
 		]
 
-		// Set-up the navigation
-		self.cardViewController?.navigationItem.rightBarButtonItem = UIBarButtonItem(
-			barButtonSystemItem: .refresh,
-			target: self,
-			action: #selector(refresh)
-		)
+		// Set-up tool bar
+		self.cardViewController?.toolbarItems = [
+			UIBarButtonItem(
+				barButtonSystemItem: .refresh,
+				target: nil,
+				action: nil
+			),
+
+			UIBarButtonItem(
+				barButtonSystemItem: .flexibleSpace,
+				target: self,
+				action: #selector(refresh(sender:))
+			),
+			
+			UIBarButtonItem(
+				title: "Random index",
+				style: .plain,
+				target: self,
+				action: #selector(randomIndex(sender:))
+			),
+
+			UIBarButtonItem(
+				barButtonSystemItem: .flexibleSpace,
+				target: nil,
+				action: nil
+			),
+
+			UIBarButtonItem(
+				title: "Random spacing",
+				style: .plain,
+				target: self,
+				action: #selector(randomSpacing(sender:))
+			),
+
+			UIBarButtonItem(
+				barButtonSystemItem: .flexibleSpace,
+				target: nil,
+				action: nil
+			),
+
+			UIBarButtonItem(
+				title: "Rebuild",
+				style: .plain,
+				target: self,
+				action: #selector(rebuild(sender:))
+			),
+		]
 
 		return true
 	}
@@ -149,7 +181,129 @@ class AppDelegate
 		self.cardViewController?.view.layoutIfNeeded()
 	}
 
-	func randomSpacing(sender: UIBarButtonItem!)
+	func add(sender : UIBarButtonItem!)
+	{
+		if (self.cardViewController == nil) {
+			return
+		}
+
+		let sheet = UIAlertController(
+			title: "Add a card",
+			message: nil,
+			preferredStyle: .actionSheet
+		)
+		sheet.popoverPresentationController?.barButtonItem = sender
+
+		sheet.addAction(UIAlertAction(
+			title: "At current position",
+			style: .default,
+			handler: { _ in
+				// TODO
+			}
+		))
+		sheet.addAction(UIAlertAction(
+			title: "At front",
+			style: .default,
+			handler: { _ in
+				// TODO
+			}
+		))
+		sheet.addAction(UIAlertAction(
+			title: "At back",
+			style: .default,
+			handler: { _ in
+				// TODO
+			}
+		))
+		sheet.addAction(UIAlertAction(
+			title: "Cancel",
+			style: .cancel,
+			handler: nil
+		))
+
+		self.window?.rootViewController?.present(sheet, animated: true, completion: nil)
+	}
+
+	func remove(sender : UIBarButtonItem!)
+	{
+		if (self.cardViewController == nil) {
+			return
+		}
+		let animated = true
+
+		let sheet = UIAlertController(
+			title: "Remove a card",
+			message: nil,
+			preferredStyle: .actionSheet
+		)
+		sheet.popoverPresentationController?.barButtonItem = sender
+
+		sheet.addAction(UIAlertAction(
+			title: "At current position",
+			style: .default,
+			handler: { _ in
+				let index = self.cardViewController!.selectedIndex
+				self.remove(at: index, animated: animated)
+			}
+		))
+		sheet.addAction(UIAlertAction(
+			title: "At previous position",
+			style: .default,
+			handler: { _ in
+				if (self.cardViewController!.selectedIndex > 0) {
+					let index = self.cardViewController!.selectedIndex - 1
+					self.remove(at: index, animated: animated)
+				}
+			}
+		))
+		sheet.addAction(UIAlertAction(
+			title: "At next position",
+			style: .default,
+			handler: { _ in
+				if (self.cardViewController!.selectedIndex < (self.items.count - 1)) {
+					let index = self.cardViewController!.selectedIndex + 1
+					self.remove(at: index, animated: animated)
+				}
+		}
+		))
+		sheet.addAction(UIAlertAction(
+			title: "From front",
+			style: .default,
+			handler: { _ in
+				self.remove(at: 0, animated: animated)
+			}
+		))
+		sheet.addAction(UIAlertAction(
+			title: "From back",
+			style: .default,
+			handler: { _ in
+				let index = self.items.count - 1
+				self.remove(at: index, animated: animated)
+			}
+		))
+		sheet.addAction(UIAlertAction(
+			title: "Cancel",
+			style: .cancel,
+			handler: nil
+		))
+
+		self.window?.rootViewController?.present(sheet, animated: true, completion: nil)
+	}
+
+	func remove(at index: Int!, animated: Bool) {
+		if (index >= self.items.count) {
+			return
+		}
+
+		self.items.remove(at: index)
+		self.cards.remove(at: index)
+		self.cardViewController!.remove(
+			at: index,
+			animated: animated
+		)
+	}
+
+	func randomSpacing(sender : UIBarButtonItem!)
 	{
 		if (self.cardViewController == nil) {
 			return;
@@ -164,7 +318,7 @@ class AppDelegate
 		cardViewController.setSpacing(spacing, animated: true)
 	}
 
-	func randomIndex(sender: UIBarButtonItem!)
+	func randomIndex(sender : UIBarButtonItem!)
 	{
 		if (self.cardViewController == nil) {
 			return;
@@ -179,7 +333,7 @@ class AppDelegate
 		cardViewController.setSelectedIndex(index, animated: true)
 	}
 
-	func changeViewControllers(sender: UIBarButtonItem!)
+	func rebuild(sender : UIBarButtonItem!)
 	{
 		buildItems(animated: true)
 	}
@@ -206,9 +360,8 @@ class AppDelegate
 		// Create the color items
 		self.items.removeAll()
 		for i in 0..<count {
-			let colorIndex = i % self.colors.count
-			let color = self.colors[colorIndex]
-			self.items.append(color)
+			let index = i % self.colors.count
+			self.items.append(index)
 		}
 
 		self.cardViewController?.refresh(animated: animated)
@@ -231,9 +384,9 @@ class AppDelegate
 
 		vc.view.frame = CGRect(x: 0, y: 0, width: 192, height: 320)
 
-		vc.color = self.items[index].withAlphaComponent(self.transparency)
-
-		vc.label.text = "Card #\(index! + 1)"
+		let dataIndex = self.items[index]
+		vc.color = self.colors[dataIndex].withAlphaComponent(self.transparency)
+		vc.label.text = "\(self.titles[dataIndex]) Card!\nOriginal Index = #\(index)"
 
 		return vc
 	}
