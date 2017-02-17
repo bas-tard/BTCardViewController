@@ -604,13 +604,13 @@ import ObjectiveC
 				options: .curveEaseOut,
 				animations: {
 					// Force a layout NOW to animate the other cards
-					self.view.setNeedsLayout()
 					self.view.setNeedsUpdateConstraints()
-					self.view.layoutIfNeeded()
+					self.view.setNeedsLayout()
 					self.view.updateConstraintsIfNeeded()
+					self.view.layoutIfNeeded()
 
 					// Adjust the content offset if needed
-					self.adjustContentOffset(removedCard: removedCard, at: index)
+					self.adjustContentOffsetIfNeeded(removedCard: removedCard, at: index)
 
 					// Move up and shrink the removed card
 					var t = CGAffineTransform(
@@ -620,16 +620,23 @@ import ObjectiveC
 					t = t.scaledBy(x: 0.5, y: 0.5)
 					removedCard.view.transform = t
 				},
-				completion: nil
+				completion: { _ in
+					removedCard.view.removeFromSuperview()
+					self.view.updateConstraintsIfNeeded()
+					self.view.layoutIfNeeded()
+					self.adjustContentOffsetIfNeeded(removedCard: removedCard, at: index)
+				}
 			)
 
 		} else {
 			removedCard.view.removeFromSuperview()
-			self.adjustContentOffset(removedCard: removedCard, at: index)
+			self.view.updateConstraintsIfNeeded()
+			self.view.layoutIfNeeded()
+			self.adjustContentOffsetIfNeeded(removedCard: removedCard, at: index)
 		}
 	}
 
-	func adjustContentOffset(removedCard: UIViewController!, at index: Int!)
+	func adjustContentOffsetIfNeeded(removedCard: UIViewController!, at index: Int!)
 	{
 		if (index < 0 || index >= self.viewControllers.count) {
 			return
@@ -699,22 +706,15 @@ import ObjectiveC
 		_viewControllers.insert(newCard, at: index)
 
 		if (animated) {
+			// Compute the location where the card will go
+			// This is not efficient, but it works
+			self.setupViewControllers()
+			let rect = newCard.view.frame
+			_viewControllers.remove(at: index)
+			self.setupViewControllers()
 
-			// Define the location where it should go
-			var rect = CGRect()
-			if (index < self.viewControllers.count) {
-				let card = self.viewControllers[index];
-				rect = card.view.frame
-			} else {
-				let card = self.viewControllers.last!
-				rect = card.view.frame
-				rect.origin.x += card.view.frame.width
-				rect.origin.x += self.spacing
-			}
-			rect.size = newCard.view.frame.size
-
+			//
 			newCard.view.translatesAutoresizingMaskIntoConstraints = true;
-			newCard.view.frame = rect
 			self.contentView.addSubview(newCard.view)
 
 			// Now, scale it and translate it
@@ -731,36 +731,31 @@ import ObjectiveC
 				options: .curveEaseOut,
 				animations: {
 					newCard.view.transform = CGAffineTransform.identity
-					newCard.view.translatesAutoresizingMaskIntoConstraints = false;
+					newCard.view.translatesAutoresizingMaskIntoConstraints = false
 
-					self.view.setNeedsLayout()
-					self.view.setNeedsUpdateConstraints()
-					self.view.layoutIfNeeded()
-					self.view.updateConstraintsIfNeeded()
+					self.setupViewControllers()
 
-					self.adjustContentOffset(addedCard: newCard, at: index)
+					self.adjustContentOffsetIfNeeded(addedCard: newCard, at: index)
 				},
 				completion: nil
 			)
 		} else {
+			newCard.view.translatesAutoresizingMaskIntoConstraints = false
 			self.contentView.addSubview(newCard.view)
 
-			self.view.setNeedsLayout()
-			self.view.setNeedsUpdateConstraints()
-			self.view.layoutIfNeeded()
-			self.view.updateConstraintsIfNeeded()
+			self.setupViewControllers()
 
-			self.adjustContentOffset(addedCard: newCard, at: index)
+			self.adjustContentOffsetIfNeeded(addedCard: newCard, at: index)
 		}
 	}
 
-	func adjustContentOffset(addedCard: UIViewController!, at index: Int!)
+	func adjustContentOffsetIfNeeded(addedCard: UIViewController!, at index: Int!)
 	{
 		if (index < 0 || index >= self.viewControllers.count) {
 			return
 		}
 
-		if (index < self.selectedIndex) {
+		if (index <= self.selectedIndex) {
 			_selectedIndex = index + 1
 
 			var contentOffset = self.scrollView.contentOffset
