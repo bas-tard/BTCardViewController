@@ -594,17 +594,17 @@ import ObjectiveC
 			return
 		}
 
-		let card = self.viewControllers.remove(at: index)
+		let removedCard = self.viewControllers.remove(at: index)
 
 		if (animated) {
 			// Remove the view from scroll view and add to main view (above background)
 			// Also set translatesAutoresizingMaskIntoConstraints to true
-			var rect = card.view.convert(card.view.bounds, to: self.view)
+			var rect = removedCard.view.convert(removedCard.view.bounds, to: self.view)
 			rect.origin.x -= self.scrollView.contentOffset.x
-			card.view.removeFromSuperview()
-			card.view.translatesAutoresizingMaskIntoConstraints = true
-			card.view.frame = rect
-			self.view.insertSubview(card.view, aboveSubview: self.backgroundImageView)
+			removedCard.view.removeFromSuperview()
+			removedCard.view.translatesAutoresizingMaskIntoConstraints = true
+			removedCard.view.frame = rect
+			self.view.insertSubview(removedCard.view, aboveSubview: self.backgroundImageView)
 
 			// Animate the removal and the layout change for the other cards
 			UIView.animate(
@@ -619,7 +619,7 @@ import ObjectiveC
 					self.view.updateConstraintsIfNeeded()
 
 					// Adjust the content offset if needed
-					self.adjustContentOffset(forRemovedCard: card, at: index)
+					self.adjustContentOffset(for: removedCard, at: index)
 
 					// Move up and shrink the removed card
 					var t = CGAffineTransform(
@@ -627,20 +627,20 @@ import ObjectiveC
 						y: 0 - self.view.bounds.height
 					)
 					t = t.scaledBy(x: 0.5, y: 0.5)
-					card.view.transform = t
+					removedCard.view.transform = t
 				},
 				completion: { _ in
-					card.view.removeFromSuperview()
+					removedCard.view.removeFromSuperview()
 				}
 			)
 
 		} else {
-			card.view.removeFromSuperview()
-			self.adjustContentOffset(forRemovedCard: card, at: index)
+			removedCard.view.removeFromSuperview()
+			self.adjustContentOffset(for: removedCard, at: index)
 		}
 	}
 
-	func adjustContentOffset(forRemovedCard card: UIViewController!, at index: Int!)
+	func adjustContentOffset(for removedCard: UIViewController!, at index: Int!)
 	{
 		if (index < 0 || index >= self.viewControllers.count) {
 			return
@@ -651,7 +651,7 @@ import ObjectiveC
 
 			var contentOffset = self.scrollView.contentOffset
 			contentOffset.x -= self.spacing
-			contentOffset.x -= card.view.frame.width
+			contentOffset.x -= removedCard.view.frame.width
 			self.scrollView.contentOffset = contentOffset
 
 			self.adjustBackgroundImageView()
@@ -700,26 +700,52 @@ import ObjectiveC
 		self.insert(card: card, at: index, animated: false)
 	}
 
-	public func insert(card : UIViewController!, at index : Int, animated : Bool)
+	public func insert(card newCard: UIViewController!, at index : Int, animated : Bool)
 	{
 		if (index < 0 || index > self.viewControllers.count) {
 			return
 		}
 
-		self.viewControllers.insert(card, at: index)
-
 		if (animated) {
-			card.view.transform = CGAffineTransform(scaleX: 0.2, y: 0.2)
+			var rect = CGRect()
+
+			// Define the location where it should go
+			if (index < self.viewControllers.count) {
+				let card = self.viewControllers[index];
+				rect = card.view.frame
+			} else {
+				let card = self.viewControllers.last!
+				rect = card.view.frame
+				rect.origin.x += card.view.frame.width
+				rect.origin.x += self.spacing
+			}
+			rect.size = newCard.view.frame.size
+			newCard.view.frame = rect
+
+			self.contentView.addSubview(newCard.view)
+
+			// Now, scale it and translate it
+			let priorAlpha = newCard.view.alpha
+			newCard.view.alpha = 0
+//			var t = CGAffineTransform(
+//				translationX: 0,
+//				y: 0 - self.view.bounds.height
+//			)
+////			t = t.scaledBy(x: 0.5, y: 0.5)
+//			newCard.view.transform = t
+
+			// Now we can add the new card
+			self.viewControllers.insert(newCard, at: index)
 
 			UIView.animate(
 				withDuration: self.animationDuration,
 				delay: 0,
 				options: .curveEaseOut,
 				animations: {
-					self.contentView.addSubview(card.view)
-					card.view.transform = CGAffineTransform.identity
+//					newCard.view.transform = CGAffineTransform.identity
+					newCard.view.alpha = priorAlpha
 
-					// Force a layout NOW to animate the other cards
+					// Force a layout NOW to animate where everything should go
 					self.view.setNeedsLayout()
 					self.view.setNeedsUpdateConstraints()
 					self.view.layoutIfNeeded()
@@ -729,7 +755,8 @@ import ObjectiveC
 				}
 			)
 		} else {
-			self.contentView.addSubview(card.view)
+			self.viewControllers.insert(newCard, at: index)
+			self.contentView.addSubview(newCard.view)
 			self.view.setNeedsLayout()
 			self.view.setNeedsUpdateConstraints()
 		}
@@ -762,6 +789,9 @@ import ObjectiveC
 	internal func offsetForViewControllerAtIndex(at index : Int!) -> CGPoint?
 	{
 		if (self.viewControllers.count == 0) {
+			return nil
+		}
+		if (index < 0 || index >= self.viewControllers.count) {
 			return nil
 		}
 		if (index == 0) {
