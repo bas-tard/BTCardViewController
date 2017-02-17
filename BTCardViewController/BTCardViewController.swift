@@ -31,8 +31,7 @@ import ObjectiveC
 	{
 		get
 		{
-//			return UIApplication.shared.statusBarOrientationAnimationDuration
-			return 5.0
+			return UIApplication.shared.statusBarOrientationAnimationDuration
 		}
 	}
 
@@ -175,6 +174,9 @@ import ObjectiveC
 			? self.backgroundImage!.size.width * percent
 			: 0
 		self.backgroundImageLeading.constant = 0 - constant
+
+		self.view.setNeedsLayout()
+		self.view.layoutIfNeeded()
 	}
 
 	private var _backgroundImageWide: Bool?
@@ -242,26 +244,20 @@ import ObjectiveC
 
 	open func setSelectedIndex(_ newValue: Int!, animated: Bool)
 	{
-		if (newValue < 0) {
-			return
-		}
-		if (newValue >= self.viewControllers.count) {
+		if (newValue < 0 || newValue >= self.viewControllers.count) {
 			return
 		}
 
 		_selectedIndex = newValue
 
 		if (self.isViewLoaded) {
-			self.scrollTo(self.selectedIndex, animated: animated)
+			self.scrollTo(newValue, animated: animated)
 		}
 	}
 
-	internal func scrollTo(_ index: Int?, animated: Bool)
+	internal func scrollTo(_ index: Int!, animated: Bool)
 	{
-		if (index == nil
-			|| index! < 0
-			|| index! >= self.viewControllers.count
-		) {
+		if (index < 0 || index >= self.viewControllers.count) {
 			return
 		}
 
@@ -456,6 +452,7 @@ import ObjectiveC
 
 		if let offset = self.offsetForViewControllerAtIndex(at: self.selectedIndex) {
 			self.scrollView.contentOffset = offset
+			self.adjustBackgroundImageView()
 		}
 	}
 
@@ -611,9 +608,9 @@ import ObjectiveC
 
 			// Animate the removal and the layout change for the other cards
 			UIView.animate(
-				withDuration: animationDuration,
-				delay: 2,
-				options: .curveEaseInOut,
+				withDuration: self.animationDuration,
+				delay: 0,
+				options: .curveEaseOut,
 				animations: {
 					// Force a layout NOW to animate the other cards
 					self.view.setNeedsLayout()
@@ -621,19 +618,16 @@ import ObjectiveC
 					self.view.layoutIfNeeded()
 					self.view.updateConstraintsIfNeeded()
 
+					// Adjust the content offset if needed
+					self.adjustContentOffset(forRemovedCard: card, at: index)
+
 					// Move up and shrink the removed card
 					var t = CGAffineTransform(
 						translationX: 0,
 						y: 0 - self.view.bounds.height
 					)
-					t = t.scaledBy(x: 0.2, y: 0.2)
+					t = t.scaledBy(x: 0.5, y: 0.5)
 					card.view.transform = t
-//
-//					// If we remove an item before the selected index, we need to
-//					// adjust the selected index (which will adjust the scroll offset)
-//					if (index < self.selectedIndex) {
-//						self.setSelectedIndex(self.selectedIndex - 1, animated: false)
-//					}
 				},
 				completion: { _ in
 					card.view.removeFromSuperview()
@@ -642,9 +636,25 @@ import ObjectiveC
 
 		} else {
 			card.view.removeFromSuperview()
-//			if (index < self.selectedIndex) {
-//				self.selectedIndex = self.selectedIndex - 1
-//			}
+			self.adjustContentOffset(forRemovedCard: card, at: index)
+		}
+	}
+
+	func adjustContentOffset(forRemovedCard card: UIViewController!, at index: Int!)
+	{
+		if (index < 0 || index >= self.viewControllers.count) {
+			return
+		}
+
+		if (index < self.selectedIndex) {
+			_selectedIndex = index
+
+			var contentOffset = self.scrollView.contentOffset
+			contentOffset.x -= self.spacing
+			contentOffset.x -= card.view.frame.width
+			self.scrollView.contentOffset = contentOffset
+
+			self.adjustBackgroundImageView()
 		}
 	}
 

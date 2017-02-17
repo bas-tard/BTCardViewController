@@ -43,7 +43,7 @@ class AppDelegate
 	, BTCardViewControllerDelegate
 {
 	var window: UIWindow?
-	var cardViewController: BTCardViewController?
+	var cardViewController: BTCardViewController!
 
 	let transparency : CGFloat = 0.333
 
@@ -70,7 +70,9 @@ class AppDelegate
 
 	var items : [Int]! = []
 
-	var cards : [UIViewController?]! = []
+	var cards : [DemoCardViewController?]! = []
+
+	var animated : Bool = true
 
 
 // MARK: UIApplicationDelegate
@@ -81,87 +83,82 @@ class AppDelegate
 	) -> Bool
 	{
 		// Build the initial items
-		self.buildItems(animated: false)
+		self.buildItems()
 
 		// Extract card view controller from root view controller
 		let navCtrl = self.window?.rootViewController as? UINavigationController
 		self.cardViewController = navCtrl?.topViewController as? BTCardViewController
-		self.cardViewController?.loadView()
+		self.cardViewController.loadView()
 
 		// Set-up the datasource and delegate
-		self.cardViewController?.dataSource = self
-		self.cardViewController?.delegate = self
+		self.cardViewController.dataSource = self
+		self.cardViewController.delegate = self
 
 		// Set-up card view controller attributes
-		self.cardViewController?.backgroundImage = UIImage(
+		self.cardViewController.backgroundImage = UIImage(
 			named: "galaxy",
 			in: Bundle.main,
 			compatibleWith: nil
 		)
-		self.cardViewController?.spacing = 16
-		self.cardViewController?.selectedIndex =
+		self.cardViewController.spacing = 16
+		self.cardViewController.selectedIndex =
 			Int(arc4random_uniform(UInt32(self.items.count)))
 
 		// Set-up the navigation
-		self.cardViewController?.navigationItem.title = "Card Demo"
-		self.cardViewController?.navigationItem.leftBarButtonItems = [
+		self.cardViewController.navigationItem.title = "Card Demo"
+		self.cardViewController.navigationItem.leftBarButtonItems = [
+			UIBarButtonItem(
+				barButtonSystemItem: .refresh,
+				target: self,
+				action: #selector(refresh(sender:))
+			),
+		]
+		self.cardViewController.navigationItem.rightBarButtonItems = [
+			UIBarButtonItem(
+				barButtonSystemItem: .add,
+				target: self,
+				action: #selector(add(sender:))
+			),
+
 			UIBarButtonItem(
 				barButtonSystemItem: .trash,
 				target: self,
 				action: #selector(remove(sender:))
 			),
 		]
-		self.cardViewController?.navigationItem.rightBarButtonItems = [
-			UIBarButtonItem(
-				barButtonSystemItem: .add,
-				target: self,
-				action: #selector(add(sender:))
-			),
-		]
 
 		// Set-up tool bar
-		self.cardViewController?.toolbarItems = [
+		self.cardViewController.toolbarItems = [
 			UIBarButtonItem(
-				barButtonSystemItem: .refresh,
-				target: nil,
-				action: nil
-			),
-
-			UIBarButtonItem(
-				barButtonSystemItem: .flexibleSpace,
-				target: self,
-				action: #selector(refresh(sender:))
-			),
-			
-			UIBarButtonItem(
-				title: "Random index",
-				style: .plain,
-				target: self,
-				action: #selector(randomIndex(sender:))
-			),
-
-			UIBarButtonItem(
-				barButtonSystemItem: .flexibleSpace,
-				target: nil,
-				action: nil
-			),
-
-			UIBarButtonItem(
-				title: "Random spacing",
-				style: .plain,
+				barButtonSystemItem: .organize,
 				target: self,
 				action: #selector(randomSpacing(sender:))
 			),
 
-			UIBarButtonItem(
-				barButtonSystemItem: .flexibleSpace,
-				target: nil,
-				action: nil
-			),
+			UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
 
 			UIBarButtonItem(
-				title: "Rebuild",
-				style: .plain,
+				barButtonSystemItem: .rewind,
+				target: self,
+				action: #selector(previousIndex(sender:))
+			),
+
+			UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+
+			self.animatedButton(),
+			
+			UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+
+			UIBarButtonItem(
+				barButtonSystemItem: .fastForward,
+				target: self,
+				action: #selector(nextIndex(sender:))
+			),
+
+			UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
+
+			UIBarButtonItem(
+				barButtonSystemItem: .redo,
 				target: self,
 				action: #selector(rebuild(sender:))
 			),
@@ -175,10 +172,10 @@ class AppDelegate
 
 	func refresh(sender: UIBarButtonItem!)
 	{
-		self.cardViewController?.view.layoutIfNeeded()
-		self.cardViewController?.view.setNeedsUpdateConstraints()
-		self.cardViewController?.view.updateConstraintsIfNeeded()
-		self.cardViewController?.view.layoutIfNeeded()
+		self.cardViewController.view.layoutIfNeeded()
+		self.cardViewController.view.setNeedsUpdateConstraints()
+		self.cardViewController.view.updateConstraintsIfNeeded()
+		self.cardViewController.view.layoutIfNeeded()
 	}
 
 	func add(sender : UIBarButtonItem!)
@@ -229,7 +226,6 @@ class AppDelegate
 		if (self.cardViewController == nil) {
 			return
 		}
-		let animated = true
 
 		let sheet = UIAlertController(
 			title: "Remove a card",
@@ -242,17 +238,17 @@ class AppDelegate
 			title: "At current position",
 			style: .default,
 			handler: { _ in
-				let index = self.cardViewController!.selectedIndex
-				self.remove(at: index, animated: animated)
+				let index = self.cardViewController.selectedIndex
+				self.remove(at: index, animated: self.animated)
 			}
 		))
 		sheet.addAction(UIAlertAction(
 			title: "At previous position",
 			style: .default,
 			handler: { _ in
-				if (self.cardViewController!.selectedIndex > 0) {
-					let index = self.cardViewController!.selectedIndex - 1
-					self.remove(at: index, animated: animated)
+				if (self.cardViewController.selectedIndex > 0) {
+					let index = self.cardViewController.selectedIndex - 1
+					self.remove(at: index, animated: self.animated)
 				}
 			}
 		))
@@ -260,9 +256,9 @@ class AppDelegate
 			title: "At next position",
 			style: .default,
 			handler: { _ in
-				if (self.cardViewController!.selectedIndex < (self.items.count - 1)) {
-					let index = self.cardViewController!.selectedIndex + 1
-					self.remove(at: index, animated: animated)
+				if (self.cardViewController.selectedIndex < (self.items.count - 1)) {
+					let index = self.cardViewController.selectedIndex + 1
+					self.remove(at: index, animated: self.animated)
 				}
 		}
 		))
@@ -270,7 +266,7 @@ class AppDelegate
 			title: "From front",
 			style: .default,
 			handler: { _ in
-				self.remove(at: 0, animated: animated)
+				self.remove(at: 0, animated: self.animated)
 			}
 		))
 		sheet.addAction(UIAlertAction(
@@ -278,7 +274,7 @@ class AppDelegate
 			style: .default,
 			handler: { _ in
 				let index = self.items.count - 1
-				self.remove(at: index, animated: animated)
+				self.remove(at: index, animated: self.animated)
 			}
 		))
 		sheet.addAction(UIAlertAction(
@@ -297,51 +293,71 @@ class AppDelegate
 
 		self.items.remove(at: index)
 		self.cards.remove(at: index)
-		self.cardViewController!.remove(
+		self.cardViewController.remove(
 			at: index,
 			animated: animated
 		)
+
+		self.relabelCards()
 	}
 
 	func randomSpacing(sender : UIBarButtonItem!)
 	{
-		if (self.cardViewController == nil) {
-			return;
-		}
-		let cardViewController = self.cardViewController!
-
 		var spacing : CGFloat = 16
 		repeat {
 			spacing = 16 + CGFloat(arc4random_uniform(32))
-		} while (spacing == cardViewController.spacing)
+		} while (spacing == self.cardViewController.spacing)
 
-		cardViewController.setSpacing(spacing, animated: true)
+		self.cardViewController.setSpacing(spacing, animated: self.animated)
 	}
 
-	func randomIndex(sender : UIBarButtonItem!)
+	func previousIndex(sender : UIBarButtonItem!)
 	{
-		if (self.cardViewController == nil) {
-			return;
+		if let index = self.cardViewController.selectedIndex {
+			self.cardViewController.setSelectedIndex(index - 1, animated: self.animated)
 		}
-		let cardViewController = self.cardViewController!
-
-		var index : Int = 0
-		repeat {
-			index = Int(arc4random_uniform(UInt32(cardViewController.viewControllers.count)))
-		} while (index == cardViewController.selectedIndex)
-
-		cardViewController.setSelectedIndex(index, animated: true)
 	}
 
+	func nextIndex(sender : UIBarButtonItem!)
+	{
+		if let index = self.cardViewController.selectedIndex {
+			self.cardViewController.setSelectedIndex(index + 1, animated: self.animated)
+		}
+	}
+	
 	func rebuild(sender : UIBarButtonItem!)
 	{
-		buildItems(animated: true)
+		self.buildItems()
+		self.cardViewController.refresh(animated: self.animated)
+	}
+
+	func toggleAnimated(sender : UIBarButtonItem!)
+	{
+		self.animated = !self.animated
+
+		if var toolbarItems = self.cardViewController.toolbarItems {
+			if let index = toolbarItems.index(of: sender) {
+				toolbarItems[index] = self.animatedButton()
+				self.cardViewController.toolbarItems = toolbarItems
+			}
+		}
+	}
+
+	func animatedButton() -> UIBarButtonItem!
+	{
+		return UIBarButtonItem(
+			barButtonSystemItem: self.animated
+				? .play
+				: .pause,
+			target: self,
+			action: #selector(toggleAnimated(sender:))
+		)
 	}
 
 
 // MARK: Utilities
 
-	func buildItems(animated: Bool)
+	func buildItems()
 	{
 		let count = 10 + Int(arc4random_uniform(16))
 
@@ -355,7 +371,7 @@ class AppDelegate
 		self.cards.removeAll()
 
 		// Recreate the cards placeholders
-		self.cards = [UIViewController?](repeating: nil, count: count)
+		self.cards = [DemoCardViewController?](repeating: nil, count: count)
 
 		// Create the color items
 		self.items.removeAll()
@@ -363,8 +379,6 @@ class AppDelegate
 			let index = i % self.colors.count
 			self.items.append(index)
 		}
-
-		self.cardViewController?.refresh(animated: animated)
 	}
 
 	private var _storyboard : UIStoryboard!
@@ -377,18 +391,34 @@ class AppDelegate
 		return _storyboard
 	}
 
-	func buildItem(at index: Int!) -> UIViewController
+	func buildItem(at index: Int!) -> DemoCardViewController
 	{
-		let vc = self.storyboard().instantiateViewController(withIdentifier: "DemoCardViewController") as! DemoCardViewController
-		vc.loadView()
+		let card = self.storyboard().instantiateViewController(withIdentifier: "DemoCardViewController") as! DemoCardViewController
+		card.loadView()
 
-		vc.view.frame = CGRect(x: 0, y: 0, width: 192, height: 320)
+		card.view.frame = CGRect(x: 0, y: 0, width: 192, height: 320)
 
 		let dataIndex = self.items[index]
-		vc.color = self.colors[dataIndex].withAlphaComponent(self.transparency)
-		vc.label.text = "\(self.titles[dataIndex]) Card!\nOriginal Index = #\(index)"
+		card.view.tag = dataIndex
+		self.setup(card: card, at: index)
 
-		return vc
+		return card
+	}
+
+	func relabelCards()
+	{
+		var index : Int = 0
+		for card in self.cards {
+			self.setup(card: card, at: index)
+			index = index + 1
+		}
+	}
+
+	func setup(card: DemoCardViewController!, at index: Int)
+	{
+		let dataIndex = card.view.tag
+		card.view.backgroundColor = self.colors[dataIndex].withAlphaComponent(self.transparency)
+		card.label.text = "\(self.titles[dataIndex]) Card!\nIndex \(index)"
 	}
 
 
@@ -401,13 +431,13 @@ class AppDelegate
 
 	func cardViewController(_ cardViewController: BTCardViewController, index: Int) -> UIViewController
 	{
-		var vc = self.cards[index]
-		if (vc == nil) {
-			vc = buildItem(at: index)
-			self.cards[index] = vc
+		var card = self.cards[index]
+		if (card == nil) {
+			card = self.buildItem(at: index)
+			self.cards[index] = card
 		}
 
-		return vc!
+		return card!
 	}
 
 

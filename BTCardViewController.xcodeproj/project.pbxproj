@@ -10,21 +10,20 @@
 		99080B441E52067D0017FF53 /* BTCardViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 99080B421E52067D0017FF53 /* BTCardViewController.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		99080B681E5207890017FF53 /* BTCardViewController.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 99080B671E5207890017FF53 /* BTCardViewController.storyboard */; };
 		99080B6A1E5207B70017FF53 /* BTCardViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99080B691E5207B70017FF53 /* BTCardViewController.swift */; };
+		9909FCC21E577B460068D7AC /* BTCardViewController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 99080B3F1E52067D0017FF53 /* BTCardViewController.framework */; };
+		9909FCC31E577B8F0068D7AC /* BTCardViewController.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 99080B3F1E52067D0017FF53 /* BTCardViewController.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		9915BC6D1E56507600ED3228 /* BTArrayExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9915BC6C1E56507600ED3228 /* BTArrayExtension.swift */; };
 		9915BC701E56513100ED3228 /* BTViewExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9915BC6F1E56513100ED3228 /* BTViewExtension.swift */; };
-		9915BC741E56617C00ED3228 /* BTCardViewController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 99080B3F1E52067D0017FF53 /* BTCardViewController.framework */; };
-		9915BC751E56617C00ED3228 /* BTCardViewController.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 99080B3F1E52067D0017FF53 /* BTCardViewController.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		9971F3901E5383C2007454AF /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9971F38F1E5383C2007454AF /* AppDelegate.swift */; };
 		9971F3951E5383C2007454AF /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9971F3931E5383C2007454AF /* Main.storyboard */; };
 		9971F3971E5383C2007454AF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9971F3961E5383C2007454AF /* Assets.xcassets */; };
 		9971F39A1E5383C2007454AF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9971F3981E5383C2007454AF /* LaunchScreen.storyboard */; };
-		9971F3A61E539083007454AF /* BTCardViewController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 99080B3F1E52067D0017FF53 /* BTCardViewController.framework */; };
 		9971F3A81E539C6E007454AF /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9971F3A71E539C6E007454AF /* Assets.xcassets */; };
 		999A46BF1E574FD20043905A /* BTGestureExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 999A46BE1E574FD20043905A /* BTGestureExtension.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		9971F3A41E53907F007454AF /* PBXContainerItemProxy */ = {
+		9909FCC01E577B3B0068D7AC /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 99080B361E52067D0017FF53 /* Project object */;
 			proxyType = 1;
@@ -36,11 +35,11 @@
 /* Begin PBXCopyFilesBuildPhase section */
 		9915BC761E56617C00ED3228 /* Embed Frameworks */ = {
 			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 12;
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				9915BC751E56617C00ED3228 /* BTCardViewController.framework in Embed Frameworks */,
+				9909FCC31E577B8F0068D7AC /* BTCardViewController.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -77,8 +76,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9971F3A61E539083007454AF /* BTCardViewController.framework in Frameworks */,
-				9915BC741E56617C00ED3228 /* BTCardViewController.framework in Frameworks */,
+				9909FCC21E577B460068D7AC /* BTCardViewController.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -182,7 +180,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				9971F3A51E53907F007454AF /* PBXTargetDependency */,
+				9909FCC11E577B3B0068D7AC /* PBXTargetDependency */,
 			);
 			name = BTCardViewControllerDemo;
 			productName = BTCardViewControllerDemo;
@@ -275,10 +273,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		9971F3A51E53907F007454AF /* PBXTargetDependency */ = {
+		9909FCC11E577B3B0068D7AC /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 99080B3E1E52067D0017FF53 /* BTCardViewController */;
-			targetProxy = 9971F3A41E53907F007454AF /* PBXContainerItemProxy */;
+			targetProxy = 9909FCC01E577B3B0068D7AC /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
