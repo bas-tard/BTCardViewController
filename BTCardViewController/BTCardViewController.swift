@@ -28,6 +28,10 @@ import ObjectiveC
 	@IBOutlet var backgroundImageView : UIImageView!
 	@IBOutlet var backgroundImageLeading : NSLayoutConstraint!
 
+	private var panCard : UIViewController?
+	private var panOriginalLocation : CGPoint?
+	private var panOriginalFrame : CGRect?
+
 
 // MARK: Initialization
 
@@ -529,11 +533,129 @@ import ObjectiveC
 
 	@IBAction func handlePanGesture(recognizer: UIPanGestureRecognizer)
 	{
+		let location = recognizer.location(in: self.contentView)
+
+		switch recognizer.state {
+		case .possible:
+			break
+
+		case .began:
+			self.panCard = self.viewController(from: recognizer)
+			if (self.panCard == nil) {
+				self.cancelPanGesture(recognizer)
+			} else {
+				self.panOriginalFrame = self.panCard!.view.frame
+				self.panOriginalLocation = location
+			}
+			break
+
+		case .changed:
+			// Move the card (vertically only)
+			if (self.panCard == nil
+				|| self.panOriginalFrame == nil
+				|| self.panOriginalLocation == nil
+			) {
+				self.cancelPanGesture(recognizer)
+			} else {
+				var cardFrame = self.panOriginalFrame!
+				cardFrame.origin.y += self.panOriginalLocation!.y - location.y
+				self.panCard!.view.frame = cardFrame
+			}
+			// TODO
+			break
+
+		// TODO: implement me
+//		case .ended:
+//			break
+
+		case .ended, .cancelled, .failed:
+			// Move back to original position
+			if (self.panCard == nil
+				|| self.panOriginalFrame == nil
+				|| self.panOriginalLocation == nil
+			) {
+				self.cancelPanGesture(recognizer)
+			} else {
+				UIView.animate(
+					withDuration: 0.4,
+					animations: {
+						self.panCard!.view.frame = self.panOriginalFrame!
+					},
+					completion: { _ in
+						self.cancelPanGesture(nil)
+					}
+				)
+			}
+			break
+		}
 		// TODO
 	}
 
+	func cancelPanGesture(_ recognizer : UIPanGestureRecognizer?)
+	{
+		if (recognizer != nil) {
+			recognizer!.isEnabled = false
+			recognizer!.isEnabled = true
+		}
 
-// MARK: UIScrollViewDelegate Implementation
+		self.panCard = nil
+		self.panOriginalFrame = nil
+		self.panOriginalLocation = nil
+	}
+
+	internal func viewController(from recognizer: UIGestureRecognizer!) -> UIViewController?
+	{
+		let location = recognizer.location(in: self.contentView)
+
+		// Get the view at the location, but that is based on the
+		// bounds with marging, so we re-recheck using the frame
+		let card = self.viewController(at: location)
+		if (card == nil || !card!.view.frame.contains(location)) {
+			return nil
+		}
+
+		return card
+	}
+
+
+// MARK: UIGestureRecognizerDelegate
+
+	public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool
+	{
+		return false
+//		let panGestureRecognizer = gestureRecognizer as? UIPanGestureRecognizer
+//		if (panGestureRecognizer == nil) {
+//			return false
+//		}
+//
+//		let card = self.viewController(from: gestureRecognizer)
+//
+//		// Only start when we start from an actual card
+//		if (card == gestureRecognizer.view) {
+//			return false
+//		}
+//
+//		let velocity = panGestureRecognizer!.velocity(in: self.view)
+//		let ratio = abs(velocity.y / velocity.x)
+//
+//		// Only start when we mostly go up
+//		if (velocity.y >= 0) {
+//			return false
+//		}
+//
+//		if (velocity.y > -20) {
+//			return false
+//		}
+//
+//		if (ratio < 5.0) {
+//			return false
+//		}
+//
+//		return true
+	}
+
+
+	// MARK: UIScrollViewDelegate Implementation
 
 	public func scrollViewDidScroll(_ scrollView: UIScrollView) {
 		self.adjustBackgroundImageView()
