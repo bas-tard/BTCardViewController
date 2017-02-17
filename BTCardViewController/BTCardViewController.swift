@@ -316,8 +316,7 @@ import ObjectiveC
 				currentView,
 				previousView: previousView,
 				at: index,
-				count: viewControllers.count,
-				setupSizeConstraints: false
+				count: viewControllers.count
 			)
 		}
 	}
@@ -326,39 +325,10 @@ import ObjectiveC
 		_ currentView : UIView!,
 		previousView : UIView?,
 		at index : Int!,
-		count : Int!,
-		setupSizeConstraints : Bool)
+		count : Int!)
 	{
 		if (!self.isViewLoaded) {
 			return
-		}
-
-		// Set-up the width and height constraint (on currentView)
-		if (setupSizeConstraints) {
-			let constraintWidth = NSLayoutConstraint(
-				item: currentView,
-				attribute: .width,
-				relatedBy: .equal,
-				toItem: nil,
-				attribute: .width,
-				multiplier: 1.0,
-				constant: currentView.frame.width
-			)
-			constraintWidth.identifier = "\(BTConstraintAttributePrefix.width.rawValue)\(index!)"
-
-			let constraintHeight = NSLayoutConstraint(
-				item: currentView,
-				attribute: .height,
-				relatedBy: .equal,
-				toItem: nil,
-				attribute: .height,
-				multiplier: 1.0,
-				constant: currentView.frame.height
-			)
-			constraintHeight.identifier = "\(BTConstraintAttributePrefix.height.rawValue)\(index!)"
-
-			currentView.addConstraints([ constraintWidth, constraintHeight ])
-			NSLayoutConstraint.activate(currentView.constraints)
 		}
 
 		var constraints : [NSLayoutConstraint] = []
@@ -437,6 +407,34 @@ import ObjectiveC
 		currentView.setNeedsUpdateConstraints()
 	}
 
+	internal func setupSizeConstraints(_ currentView : UIView!, at index : Int!)
+	{
+		let constraintWidth = NSLayoutConstraint(
+			item: currentView,
+			attribute: .width,
+			relatedBy: .equal,
+			toItem: nil,
+			attribute: .width,
+			multiplier: 1.0,
+			constant: currentView.frame.width
+		)
+		constraintWidth.identifier = "\(BTConstraintAttributePrefix.width.rawValue)\(index!)"
+
+		let constraintHeight = NSLayoutConstraint(
+			item: currentView,
+			attribute: .height,
+			relatedBy: .equal,
+			toItem: nil,
+			attribute: .height,
+			multiplier: 1.0,
+			constant: currentView.frame.height
+		)
+		constraintHeight.identifier = "\(BTConstraintAttributePrefix.height.rawValue)\(index!)"
+
+		currentView.addConstraints([ constraintWidth, constraintHeight ])
+		NSLayoutConstraint.activate(currentView.constraints)
+	}
+
 	internal func resetContentOffset()
 	{
 		self.view.layoutIfNeeded()
@@ -478,7 +476,6 @@ import ObjectiveC
 		self.setupViewControllers()
 	}
 
-
 	internal func setupViewControllers()
 	{
 		if (!self.isViewLoaded) {
@@ -487,35 +484,36 @@ import ObjectiveC
 
 		// Remove any views from the content area. This should remove all constraints
 		// from those views as well
-		self.contentView.subviews.forEach({ $0.removeFromSuperview() })
+		var toRemove = self.contentView.subviews
 
 		// Add the view controllers to the scroll view's content
 		for viewController in self.viewControllers {
-			let index = self.viewControllers.index(of: viewController)!
+			let index = self.viewControllers.index(of: viewController)
 			let currentView = viewController.view!
-			let previousView = index > 0
-				? self.viewControllers[index - 1].view
-				: nil
 
 			// Disable the conversion of autosizing to constraints
 			currentView.translatesAutoresizingMaskIntoConstraints = false
 
 			// Just in case the view controller was not in the subviews above, we need
 			// to make sure it's view is not in any hierarchy.
-			currentView.removeFromSuperview()
+			if (currentView.superview != self.contentView) {
+				currentView.removeFromSuperview()
+			}
 
-			// Add the controller to the content
-			self.contentView.addSubview(currentView)
+			// If added for the first time, we need to set-up it's size constraint
+			if (currentView.superview == nil) {
+				self.setupSizeConstraints(currentView, at: index)
+				self.contentView.addSubview(currentView)
+			}
 
-			// Set-up the constraints for the view controllers
-			self.setupConstraints(
-				currentView,
-				previousView: previousView,
-				at: index,
-				count: self.viewControllers.count,
-				setupSizeConstraints: true
-			)
+			self.view.setNeedsUpdateConstraints()
+
+			toRemove.remove(object: currentView)
 		}
+
+		toRemove.forEach({
+			$0.removeFromSuperview()
+		})
 	}
 
 
@@ -702,49 +700,41 @@ import ObjectiveC
 			return
 		}
 
-		// Don't use self.viewControllers here as it will trigger it's own layout pass
-		_viewControllers.insert(newCard, at: index)
+		self.viewControllers.insert(newCard, at: index)
 
 		if (animated) {
-			// Compute the location where the card will go
-			// This is not efficient, but it works
-			self.setupViewControllers()
-			let rect = newCard.view.frame
-			_viewControllers.remove(at: index)
-			self.setupViewControllers()
+//			// Scale and translate the new card
+//			var t = CGAffineTransform(
+//				translationX: 0,
+//				y: 0 - self.view.bounds.height
+//			)
+//			t = t.scaledBy(x: 0.5, y: 0.5)
+//			newCard.view.transform = t
+//
 
-			//
-			newCard.view.translatesAutoresizingMaskIntoConstraints = true;
-			self.contentView.addSubview(newCard.view)
-
-			// Now, scale it and translate it
-			var t = CGAffineTransform(
-				translationX: 0,
-				y: 0 - self.view.bounds.height
-			)
-			t = t.scaledBy(x: 0.5, y: 0.5)
-			newCard.view.transform = t
-
+			// Now, we animate the clean-up
 			UIView.animate(
 				withDuration: self.animationDuration,
 				delay: 0,
 				options: .curveEaseOut,
 				animations: {
 					newCard.view.transform = CGAffineTransform.identity
-					newCard.view.translatesAutoresizingMaskIntoConstraints = false
 
-					self.setupViewControllers()
+					// Apply all the layout changes from earlier
+					self.view.setNeedsUpdateConstraints()
+					self.view.setNeedsLayout()
+					self.view.updateConstraintsIfNeeded()
+					self.view.layoutIfNeeded()
 
 					self.adjustContentOffsetIfNeeded(addedCard: newCard, at: index)
 				},
 				completion: nil
 			)
 		} else {
-			newCard.view.translatesAutoresizingMaskIntoConstraints = false
-			self.contentView.addSubview(newCard.view)
-
-			self.setupViewControllers()
-
+			self.view.setNeedsUpdateConstraints()
+			self.view.setNeedsLayout()
+			self.view.updateConstraintsIfNeeded()
+			self.view.layoutIfNeeded()
 			self.adjustContentOffsetIfNeeded(addedCard: newCard, at: index)
 		}
 	}
