@@ -610,7 +610,7 @@ import ObjectiveC
 					self.view.updateConstraintsIfNeeded()
 
 					// Adjust the content offset if needed
-					self.adjustContentOffset(for: removedCard, at: index)
+					self.adjustContentOffset(removedCard: removedCard, at: index)
 
 					// Move up and shrink the removed card
 					var t = CGAffineTransform(
@@ -625,18 +625,18 @@ import ObjectiveC
 
 		} else {
 			removedCard.view.removeFromSuperview()
-			self.adjustContentOffset(for: removedCard, at: index)
+			self.adjustContentOffset(removedCard: removedCard, at: index)
 		}
 	}
 
-	func adjustContentOffset(for removedCard: UIViewController!, at index: Int!)
+	func adjustContentOffset(removedCard: UIViewController!, at index: Int!)
 	{
 		if (index < 0 || index >= self.viewControllers.count) {
 			return
 		}
 
 		if (index < self.selectedIndex) {
-			_selectedIndex = index
+			_selectedIndex = self.selectedIndex - 1
 
 			var contentOffset = self.scrollView.contentOffset
 			contentOffset.x -= self.spacing
@@ -735,6 +735,10 @@ import ObjectiveC
 
 					self.view.setNeedsLayout()
 					self.view.setNeedsUpdateConstraints()
+					self.view.layoutIfNeeded()
+					self.view.updateConstraintsIfNeeded()
+
+					self.adjustContentOffset(addedCard: newCard, at: index)
 				},
 				completion: nil
 			)
@@ -743,11 +747,33 @@ import ObjectiveC
 
 			self.view.setNeedsLayout()
 			self.view.setNeedsUpdateConstraints()
+			self.view.layoutIfNeeded()
+			self.view.updateConstraintsIfNeeded()
+
+			self.adjustContentOffset(addedCard: newCard, at: index)
+		}
+	}
+
+	func adjustContentOffset(addedCard: UIViewController!, at index: Int!)
+	{
+		if (index < 0 || index >= self.viewControllers.count) {
+			return
+		}
+
+		if (index < self.selectedIndex) {
+			_selectedIndex = index + 1
+
+			var contentOffset = self.scrollView.contentOffset
+			contentOffset.x += self.spacing
+			contentOffset.x += addedCard.view.frame.width
+			self.scrollView.contentOffset = contentOffset
+
+			self.adjustBackgroundImageView()
 		}
 	}
 
 
-	// MARK: Utilities
+// MARK: Utilities
 
 	internal func snapToViewController(at offset : CGPoint?, animated: Bool)
 	{
