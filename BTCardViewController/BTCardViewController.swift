@@ -563,7 +563,7 @@ import ObjectiveC
 	}
 
 
-// MARK: Card insertion
+// MARK: Card Removal
 
 	public func remove(_ card: UIViewController!)
 	{
@@ -659,7 +659,84 @@ import ObjectiveC
 	}
 
 
-// MARK: Utilities
+// MARK: Card Insertion
+
+	public func add(card : UIViewController!)
+	{
+		self.insert(card: card, at: self.viewControllers.count, animated: false)
+	}
+
+	public func add(card : UIViewController!, animated : Bool)
+	{
+		self.insert(card: card, at: self.viewControllers.count, animated: animated)
+	}
+
+	public func add()
+	{
+		self.insert(at: self.viewControllers.count, animated: false)
+	}
+
+	public func add(animated : Bool)
+	{
+		self.insert(at: self.viewControllers.count, animated: animated)
+	}
+
+	public func insert(at index : Int)
+	{
+		if let card = self.dataSource?.cardViewController(self, index: index) {
+			self.insert(card: card, at: index, animated: false)
+		}
+	}
+
+	public func insert(at index : Int, animated : Bool)
+	{
+		if let card = self.dataSource?.cardViewController(self, index: index) {
+			self.insert(card: card, at: index, animated: animated)
+		}
+	}
+
+	public func insert(card : UIViewController!, at index : Int)
+	{
+		self.insert(card: card, at: index, animated: false)
+	}
+
+	public func insert(card : UIViewController!, at index : Int, animated : Bool)
+	{
+		if (index < 0 || index > self.viewControllers.count) {
+			return
+		}
+
+		self.viewControllers.insert(card, at: index)
+
+		if (animated) {
+			card.view.transform = CGAffineTransform(scaleX: 0.2, y: 0.2)
+
+			UIView.animate(
+				withDuration: self.animationDuration,
+				delay: 0,
+				options: .curveEaseOut,
+				animations: {
+					self.contentView.addSubview(card.view)
+					card.view.transform = CGAffineTransform.identity
+
+					// Force a layout NOW to animate the other cards
+					self.view.setNeedsLayout()
+					self.view.setNeedsUpdateConstraints()
+					self.view.layoutIfNeeded()
+					self.view.updateConstraintsIfNeeded()
+				},
+				completion: { _ in
+				}
+			)
+		} else {
+			self.contentView.addSubview(card.view)
+			self.view.setNeedsLayout()
+			self.view.setNeedsUpdateConstraints()
+		}
+	}
+
+
+	// MARK: Utilities
 
 	internal func snapToViewController(at offset : CGPoint?, animated: Bool)
 	{

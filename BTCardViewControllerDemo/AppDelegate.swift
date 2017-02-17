@@ -13,6 +13,19 @@ class DemoCardViewController : UIViewController
 {
 	@IBOutlet var label : UILabel!
 
+	private var _dataIndex : Int = 0
+	public var dataIndex : Int
+	{
+		set
+		{
+			_dataIndex = newValue
+		}
+		get
+		{
+			return _dataIndex
+		}
+	}
+
 	private var _color : UIColor?
 	var color : UIColor?
 	{
@@ -68,8 +81,6 @@ class AppDelegate
 		"Orange",
 	]
 
-	var items : [Int]! = []
-
 	var cards : [DemoCardViewController?]! = []
 
 	var animated : Bool = true
@@ -102,7 +113,7 @@ class AppDelegate
 		)
 		self.cardViewController.spacing = 16
 		self.cardViewController.selectedIndex =
-			Int(arc4random_uniform(UInt32(self.items.count)))
+			Int(arc4random_uniform(UInt32(self.cards.count)))
 
 		// Set-up the navigation
 		self.cardViewController.navigationItem.title = "Card Demo"
@@ -180,10 +191,6 @@ class AppDelegate
 
 	func add(sender : UIBarButtonItem!)
 	{
-		if (self.cardViewController == nil) {
-			return
-		}
-
 		let sheet = UIAlertController(
 			title: "Add a card",
 			message: nil,
@@ -192,24 +199,42 @@ class AppDelegate
 		sheet.popoverPresentationController?.barButtonItem = sender
 
 		sheet.addAction(UIAlertAction(
-			title: "At current position",
+			title: "To current position",
 			style: .default,
 			handler: { _ in
-				// TODO
+				let index = self.cardViewController.selectedIndex
+				self.add(at: index, animated: self.animated)
 			}
 		))
 		sheet.addAction(UIAlertAction(
-			title: "At front",
+			title: "To previous position",
 			style: .default,
 			handler: { _ in
-				// TODO
+				let index = self.cardViewController.selectedIndex - 1
+				self.add(at: index, animated: self.animated)
 			}
 		))
 		sheet.addAction(UIAlertAction(
-			title: "At back",
+			title: "to next position",
 			style: .default,
 			handler: { _ in
-				// TODO
+				let index = self.cardViewController.selectedIndex + 1
+				self.add(at: index, animated: self.animated)
+		}
+		))
+		sheet.addAction(UIAlertAction(
+			title: "To front",
+			style: .default,
+			handler: { _ in
+				self.add(at: 0, animated: self.animated)
+			}
+		))
+		sheet.addAction(UIAlertAction(
+			title: "To back",
+			style: .default,
+			handler: { _ in
+				let index = self.cards.count
+				self.add(at: index, animated: self.animated)
 			}
 		))
 		sheet.addAction(UIAlertAction(
@@ -221,12 +246,23 @@ class AppDelegate
 		self.window?.rootViewController?.present(sheet, animated: true, completion: nil)
 	}
 
-	func remove(sender : UIBarButtonItem!)
-	{
-		if (self.cardViewController == nil) {
+	func add(at index: Int!, animated: Bool) {
+		if (index < 0 || index > self.cards.count) {
 			return
 		}
 
+		// Let the controller ask the delegate
+		self.cards.insert(nil, at: index)
+		self.cardViewController.insert(
+			at: index,
+			animated: animated
+		)
+
+		self.relabelCards()
+	}
+	
+	func remove(sender : UIBarButtonItem!)
+	{
 		let sheet = UIAlertController(
 			title: "Remove a card",
 			message: nil,
@@ -235,7 +271,7 @@ class AppDelegate
 		sheet.popoverPresentationController?.barButtonItem = sender
 
 		sheet.addAction(UIAlertAction(
-			title: "At current position",
+			title: "From current position",
 			style: .default,
 			handler: { _ in
 				let index = self.cardViewController.selectedIndex
@@ -243,7 +279,7 @@ class AppDelegate
 			}
 		))
 		sheet.addAction(UIAlertAction(
-			title: "At previous position",
+			title: "From previous position",
 			style: .default,
 			handler: { _ in
 				if (self.cardViewController.selectedIndex > 0) {
@@ -253,10 +289,10 @@ class AppDelegate
 			}
 		))
 		sheet.addAction(UIAlertAction(
-			title: "At next position",
+			title: "From next position",
 			style: .default,
 			handler: { _ in
-				if (self.cardViewController.selectedIndex < (self.items.count - 1)) {
+				if (self.cardViewController.selectedIndex < (self.cards.count - 1)) {
 					let index = self.cardViewController.selectedIndex + 1
 					self.remove(at: index, animated: self.animated)
 				}
@@ -273,7 +309,7 @@ class AppDelegate
 			title: "From back",
 			style: .default,
 			handler: { _ in
-				let index = self.items.count - 1
+				let index = self.cards.count - 1
 				self.remove(at: index, animated: self.animated)
 			}
 		))
@@ -287,11 +323,10 @@ class AppDelegate
 	}
 
 	func remove(at index: Int!, animated: Bool) {
-		if (index >= self.items.count) {
+		if (index < 0 || index >= self.cards.count) {
 			return
 		}
 
-		self.items.remove(at: index)
 		self.cards.remove(at: index)
 		self.cardViewController.remove(
 			at: index,
@@ -372,13 +407,6 @@ class AppDelegate
 
 		// Recreate the cards placeholders
 		self.cards = [DemoCardViewController?](repeating: nil, count: count)
-
-		// Create the color items
-		self.items.removeAll()
-		for i in 0..<count {
-			let index = i % self.colors.count
-			self.items.append(index)
-		}
 	}
 
 	private var _storyboard : UIStoryboard!
@@ -398,8 +426,7 @@ class AppDelegate
 
 		card.view.frame = CGRect(x: 0, y: 0, width: 192, height: 320)
 
-		let dataIndex = self.items[index]
-		card.view.tag = dataIndex
+		card.dataIndex = Int(arc4random_uniform(UInt32(self.colors.count)))
 		self.setup(card: card, at: index)
 
 		return card
@@ -416,9 +443,9 @@ class AppDelegate
 
 	func setup(card: DemoCardViewController!, at index: Int)
 	{
-		let dataIndex = card.view.tag
+		let dataIndex = card.dataIndex
 		card.view.backgroundColor = self.colors[dataIndex].withAlphaComponent(self.transparency)
-		card.label.text = "\(self.titles[dataIndex]) Card!\nIndex \(index)"
+		card.label.text = "\(self.titles[dataIndex]) Card\nIndex \(index)"
 	}
 
 
