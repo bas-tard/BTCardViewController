@@ -187,7 +187,7 @@ class AppDelegate
 
 	func buildItems(animated: Bool)
 	{
-		let count = Int(arc4random_uniform(16))
+		let count = 10 + Int(arc4random_uniform(16))
 
 		// Clear existing cards
 		self.cards.forEach({

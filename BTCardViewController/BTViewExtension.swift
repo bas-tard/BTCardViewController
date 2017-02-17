@@ -68,28 +68,17 @@ public extension UIView
 		}
 		get
 		{
-			var rect = objc_getAssociatedObject(self, &KEY_BOUNDS_WITH_MARGINS) as? CGRect
-			if (rect == nil) {
-				rect = self.computeBoundsWithMargins()
-			}
-
-			return rect;
+			return objc_getAssociatedObject(self, &KEY_BOUNDS_WITH_MARGINS) as? CGRect
 		}
-	}
-
-	/// Indicates that the boundsWithMargins should be recalculated the next time they are needed
-	public func recomputeBoundsWithMarginsWhenNeeded()
-	{
-		self.boundsWithMargins = nil
 	}
 
 	/// Computes the bounds of the view containing horizontal margins
 	///
 	/// - Returns: The expanded bounds
-	private func computeBoundsWithMargins() -> CGRect?
+	public func computeBoundsWithMargins()
 	{
 		if (self.superview == nil) {
-			return nil
+			return
 		}
 
 		var bounds = self.bounds
@@ -138,6 +127,54 @@ public extension UIView
 		}
 
 		self.boundsWithMargins = bounds
-		return bounds
+	}
+}
+
+public class BTCardView : UIView
+{
+	public override var bounds: CGRect
+	{
+		didSet
+		{
+			if (self.superview != nil) {
+				self.computeBoundsWithMargins()
+				self.setupDebugBorder()
+			}
+		}
+	}
+
+	public override func didMoveToSuperview()
+	{
+		if (self.superview != nil) {
+			self.computeBoundsWithMargins()
+			self.setupDebugBorder()
+		}
+	}
+
+	public override func updateConstraints() {
+		super.updateConstraints()
+
+		if (self.superview != nil) {
+			self.computeBoundsWithMargins()
+			self.setupDebugBorder()
+		}
+	}
+
+	private var debugBorderLayer : CALayer?
+	private func setupDebugBorder()
+	{
+		if (self.debugBorderLayer == nil) {
+			self.debugBorderLayer = CALayer()
+			self.debugBorderLayer!.borderColor = UIColor.yellow.cgColor
+			self.debugBorderLayer!.borderWidth = 1
+			self.layer.addSublayer(self.debugBorderLayer!)
+		}
+		let border = self.debugBorderLayer!
+
+		if let rect = self.boundsWithMargins {
+			border.frame = rect
+		}
+
+		border.setNeedsLayout()
 	}
 }

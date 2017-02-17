@@ -54,7 +54,7 @@
                         <viewControllerLayoutGuide type="top" id="hCi-CF-eBG"/>
                         <viewControllerLayoutGuide type="bottom" id="FLl-Jr-3et"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="Aj9-EK-osI">
+                    <view key="view" contentMode="scaleToFill" id="Aj9-EK-osI" customClass="BTCardView" customModule="BTCardViewController">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>

@@ -75,7 +75,6 @@ import ObjectiveC
 		self.scrollTo(self.selectedIndex, animated: false)
 	}
 
-
 // MARK: Data Source
 
 	private var _dataSource : BTCardViewControllerDataSource?
@@ -311,7 +310,6 @@ import ObjectiveC
 		if (!self.isViewLoaded) {
 			return
 		}
-		currentView.recomputeBoundsWithMarginsWhenNeeded()
 
 		// Set-up the width and height constraint (on currentView)
 		if (setupSizeConstraints) {
@@ -585,7 +583,9 @@ import ObjectiveC
 		_selectedIndex = index
 
 		if let expected = self.offsetForViewControllerAtIndex(at: index) {
-			self.scrollView.setContentOffset(expected, animated: animated)
+			if (!expected.equalTo(self.scrollView.contentOffset)) {
+				self.scrollView.setContentOffset(expected, animated: animated)
+			}
 		}
 	}
 
@@ -598,20 +598,17 @@ import ObjectiveC
 			return CGPoint()
 		}
 
-		// We compute the offset from scratch because we sometimes need it prior
-		// to contraints or layouts being valid.
+		let vc = self.viewControllers[index]
+		let frame = vc.view.frame
 
 		// Start from the current scroll view offset (in order to keep the y-axis as is)
-		var offset = self.scrollView.contentOffset
+		var x : CGFloat = frame.origin.x
+		x -= (self.scrollView.frame.width - frame.width) / 2
 
-		offset.x = 0
-		for i in 0...index {
-			if let bounds = self.viewControllers[i].view.boundsWithMargins {
-				offset.x += bounds.width
-			}
-		}
-
-		return offset
+		return CGPoint(
+			x: x,
+			y: self.scrollView.contentOffset.y
+		)
 	}
 
 	internal func viewController(at offset: CGPoint?) -> UIViewController?
@@ -623,7 +620,7 @@ import ObjectiveC
 
 		// Check which view controller will be in the horizontal center
 		// at the given offset
-		point.x += self.scrollView.frame.midX
+		point.x += self.scrollView.frame.width / 2.0
 
 		for controller in self.viewControllers {
 			if let bounds = controller.view.boundsWithMargins {
