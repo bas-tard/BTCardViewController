@@ -99,11 +99,6 @@ class AppDelegate
 		// Extract card view controller from root view controller
 		let navCtrl = self.window?.rootViewController as? UINavigationController
 		self.cardViewController = navCtrl?.topViewController as? BTCardViewController
-		self.cardViewController.loadView()
-
-		// Set-up the datasource and delegate
-		self.cardViewController.dataSource = self
-		self.cardViewController.delegate = self
 
 		// Set-up card view controller attributes
 		self.cardViewController.backgroundImage = UIImage(
@@ -114,6 +109,10 @@ class AppDelegate
 		self.cardViewController.spacing = 16
 		self.cardViewController.selectedIndex =
 			Int(arc4random_uniform(UInt32(self.cards.count)))
+
+		// Set-up the datasource and delegate
+		self.cardViewController.delegate = self
+		self.cardViewController.dataSource = self
 
 		// Set-up the navigation
 		self.cardViewController.navigationItem.title = "Card Demo"
@@ -422,10 +421,10 @@ class AppDelegate
 	func buildItem(at index: Int!) -> DemoCardViewController
 	{
 		let card = self.storyboard().instantiateViewController(withIdentifier: "DemoCardViewController") as! DemoCardViewController
-		card.loadView()
 
-		// TODO: get this from storyboard
-		card.view.translatesAutoresizingMaskIntoConstraints = false
+		var rect = self.cardViewController.scrollView.frame
+		rect.size.width *= 0.8
+		rect.size.height -= 32
 		card.view.addConstraints([
 			NSLayoutConstraint(
 				item: card.view,
@@ -434,7 +433,7 @@ class AppDelegate
 				toItem: nil,
 				attribute: .width,
 				multiplier: 1,
-				constant: 192),
+				constant: rect.width),
 
 			NSLayoutConstraint(
 				item: card.view,
@@ -443,7 +442,7 @@ class AppDelegate
 				toItem: nil,
 				attribute: .height,
 				multiplier: 1,
-				constant: 320),
+				constant: rect.height),
 		])
 
 		card.dataIndex = Int(arc4random_uniform(UInt32(self.colors.count)))

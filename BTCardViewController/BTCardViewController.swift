@@ -18,10 +18,10 @@ import ObjectiveC
 // MARK: Interface Builder Outlets
 
 	/// Scroll view from the storyboard (CAN NOT BE NIL!)
-	@IBOutlet private (set) open var scrollView : UIScrollView!
+	@IBOutlet private (set) public var scrollView : UIScrollView!
 
 	/// Single content view in scroll view from the storyboard (CAN NOT BE NIL!)
-	@IBOutlet private (set) open var contentView : UIView!
+	@IBOutlet private (set) public var contentView : UIView!
 
 	/// Background Image that scrolls with the content (based on image width)
 	@IBOutlet var backgroundImageView : UIImageView!
@@ -58,9 +58,14 @@ import ObjectiveC
 
 // MARK: View Life Cycle
 
-	override open func viewDidLoad()
+	public override func viewDidLoad()
 	{
 		super.viewDidLoad()
+
+		// Remove any dummy IB views in the content view
+		self.contentView.subviews.forEach({
+			$0.removeFromSuperview()
+		})
 
 		// Get the image from the background image view (from the storyboard),
 		// if we have none set-up from setBackgroundImage
@@ -80,6 +85,16 @@ import ObjectiveC
 		// Adjust the scroll position
 		self.scrollTo(self.selectedIndex, animated: false)
 	}
+
+	public override func viewWillAppear(_ animated: Bool) {
+		super.viewWillAppear(animated)
+
+		self.view.setNeedsUpdateConstraints()
+		self.view.updateConstraintsIfNeeded()
+		self.view.setNeedsLayout()
+		self.view.layoutIfNeeded()
+	}
+
 
 // MARK: Data Source
 
@@ -174,9 +189,6 @@ import ObjectiveC
 			? self.backgroundImage!.size.width * percent
 			: 0
 		self.backgroundImageLeading.constant = 0 - constant
-
-		self.view.setNeedsLayout()
-		self.view.layoutIfNeeded()
 	}
 
 	private var _backgroundImageWide: Bool?
@@ -270,8 +282,9 @@ import ObjectiveC
 		let card = self.cards[newValue]
 		self.delegate?.cardViewController?(self, willSelect: card, at: newValue)
 
+		_selectedIndex = newValue
+
 		let completion = { () -> Void in
-			self._selectedIndex = newValue
 			self.delegate?.cardViewController?(self, didSelect: card, at: newValue)
 		}
 
@@ -293,7 +306,7 @@ import ObjectiveC
 			return
 		}
 
-		if let offset = self.offsetForCardAtIndex(at: index) {
+		if let offset = self.offsetForCard(at: index) {
 
 			if (animated && completion != nil) {
 				// Wrap from a CATransaction in order to set the block
@@ -366,9 +379,7 @@ import ObjectiveC
 
 		var constraints : [NSLayoutConstraint] = []
 
-		// Align all views to the vertical center of the content view. Adjust for the nav and status bar
-		let barHeights = self.scrollView.contentInset.top
-			+ self.scrollView.contentInset.bottom
+		// Align all views to the vertical center of the content view
 		let constraintCenter = NSLayoutConstraint(
 			item: currentView,
 			attribute: .centerY,
@@ -376,7 +387,7 @@ import ObjectiveC
 			toItem:self.contentView,
 			attribute: .centerY,
 			multiplier: 1.0,
-			constant:barHeights / 2.0
+			constant:0
 		)
 		constraintCenter.identifier = "\(BTConstraintAttributePrefix.centerY.rawValue)\(index!)"
 		constraints.append(constraintCenter)
@@ -444,7 +455,7 @@ import ObjectiveC
 	{
 		self.view.layoutIfNeeded()
 
-		if let offset = self.offsetForCardAtIndex(at: self.selectedIndex) {
+		if let offset = self.offsetForCard(at: self.selectedIndex) {
 			self.scrollView.contentOffset = offset
 			self.adjustBackgroundImageView()
 		}
@@ -556,7 +567,7 @@ import ObjectiveC
 		let index = self.indexOfCard(at: offset)
 		if (index != nil) {
 			_selectedIndex = index
-			offset = self.offsetForCardAtIndex(at: index)
+			offset = self.offsetForCard(at: index)
 		}
 
 		if (offset != nil) {
@@ -603,12 +614,11 @@ import ObjectiveC
 		if (animated) {
 			// Remove the view from scroll view and add to main view (above background)
 			// Also set translatesAutoresizingMaskIntoConstraints to true
-			var rect = removedCard.view.convert(removedCard.view.bounds, to: self.view)
-			rect.origin.x -= self.scrollView.contentOffset.x
+			let rect = removedCard.view.convert(removedCard.view.bounds, to: self.view)
 			removedCard.view.removeFromSuperview()
 			removedCard.view.translatesAutoresizingMaskIntoConstraints = true
 			removedCard.view.frame = rect
-			self.view.insertSubview(removedCard.view, aboveSubview: self.backgroundImageView)
+			self.view.insertSubview(removedCard.view, belowSubview: self.contentView)
 
 			// Animate the removal and the layout change for the other cards
 			UIView.animate(
@@ -812,14 +822,14 @@ import ObjectiveC
 
 		_selectedIndex = index
 
-		if let expected = self.offsetForCardAtIndex(at: index) {
+		if let expected = self.offsetForCard(at: index) {
 			if (!expected.equalTo(self.scrollView.contentOffset)) {
 				self.scrollView.setContentOffset(expected, animated: animated)
 			}
 		}
 	}
 
-	internal func offsetForCardAtIndex(at index : Int!) -> CGPoint?
+	internal func offsetForCard(at index : Int!) -> CGPoint?
 	{
 		if (self.cards.count == 0) {
 			return nil
