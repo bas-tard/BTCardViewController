@@ -363,7 +363,7 @@ class AppDelegate
 	func rebuild(sender : UIBarButtonItem!)
 	{
 		self.buildItems()
-		self.cardViewController.refresh(animated: self.animated)
+		self.cardViewController.refreshCards(animated: self.animated)
 	}
 
 	func toggleAnimated(sender : UIBarButtonItem!)
@@ -492,23 +492,10 @@ class AppDelegate
 
 	func cardViewController(
 		_ cardViewController: BTCardViewController,
-		willDisplay viewController: UIViewController,
-		at index: Int)
-	{
-	}
-
-	func cardViewController(
-		_ cardViewController: BTCardViewController,
-		didDisplay viewController: UIViewController,
-		at index: Int)
-	{
-	}
-
-	func cardViewController(
-		_ cardViewController: BTCardViewController,
 		willSelect viewController: UIViewController,
 		at index: Int)
 	{
+		NSLog("willSelect: \(index): \(viewController)")
 	}
 
 	func cardViewController(
@@ -516,6 +503,39 @@ class AppDelegate
 		didSelect viewController: UIViewController,
 		at index: Int)
 	{
+		NSLog("didSelect: \(index): \(viewController)")
+	}
+
+	func cardViewController(
+		_ cardViewController: BTCardViewController!,
+		willInsert viewController: UIViewController!,
+		at index: Int)
+	{
+		NSLog("willInsert: \(index): \(viewController)")
+	}
+
+	func cardViewController(
+		_ cardViewController: BTCardViewController!,
+		didInsert viewController: UIViewController!,
+		at index: Int)
+	{
+		NSLog("didInsert: \(index): \(viewController)")
+	}
+
+	func cardViewController(
+		_ cardViewController: BTCardViewController!,
+		willRemove viewController: UIViewController!,
+		at index: Int)
+	{
+		NSLog("willRemove: \(index): \(viewController)")
+	}
+
+	func cardViewController(
+		_ cardViewController: BTCardViewController!,
+		didRemove viewController: UIViewController!,
+		at index: Int)
+	{
+		NSLog("didRemove: \(index): \(viewController)")
 	}
 }
 

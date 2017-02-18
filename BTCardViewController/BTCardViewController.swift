@@ -41,7 +41,7 @@ import ObjectiveC
 	{
 		_spacing = 8
 		_backgroundImage = nil
-		_viewControllers = []
+		_cards = []
 		_selectedIndex = 0
 		super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
 	}
@@ -50,7 +50,7 @@ import ObjectiveC
 	{
 		_spacing = 8
 		_backgroundImage = nil
-		_viewControllers = []
+		_cards = []
 		_selectedIndex = 0
 		super.init(coder: aDecoder)
 	}
@@ -75,7 +75,7 @@ import ObjectiveC
 		self.scrollView.delegate = self
 
 		// Load the views if needed
-		self.refresh(animated: false)
+		self.refreshCards(animated: false)
 
 		// Adjust the scroll position
 		self.scrollTo(self.selectedIndex, animated: false)
@@ -103,7 +103,7 @@ import ObjectiveC
 		_dataSource = newValue
 
 		if (self.isViewLoaded) {
-			self.refresh(animated: animated)
+			self.refreshCards(animated: animated)
 		}
 	}
 
@@ -114,21 +114,21 @@ import ObjectiveC
 	open var delegate: BTCardViewControllerDelegate?
 
 
-	open func refresh(animated: Bool)
+	open func refreshCards(animated: Bool)
 	{
-		var vcs : [UIViewController] = []
+		var cards : [UIViewController] = []
 
 		if (self.dataSource != nil) {
 			let dataSource = self.dataSource!
 			let count = dataSource.numberOfCards(in: self)
 
 			for index in 0..<count {
-				let vc = dataSource.cardViewController(self, index: index)
-				vcs.append(vc)
+				let card = dataSource.cardViewController(self, index: index)
+				cards.append(card)
 			}
 		}
 
-		self.setViewControllers(vcs, animated: animated)
+		self.setCards(cards, animated: animated)
 	}
 
 
@@ -263,25 +263,58 @@ import ObjectiveC
 
 	open func setSelectedIndex(_ newValue: Int!, animated: Bool)
 	{
-		if (newValue < 0 || newValue >= self.viewControllers.count) {
+		if (newValue < 0 || newValue >= self.cards.count) {
 			return
 		}
 
-		_selectedIndex = newValue
+		let card = self.cards[newValue]
+		self.delegate?.cardViewController?(self, willSelect: card, at: newValue)
+
+		let completion = { () -> Void in
+			self._selectedIndex = newValue
+			self.delegate?.cardViewController?(self, didSelect: card, at: newValue)
+		}
 
 		if (self.isViewLoaded) {
-			self.scrollTo(newValue, animated: animated)
+			self.scrollTo(newValue, animated: animated, completion: completion)
+		} else {
+			completion()
 		}
 	}
 
-	internal func scrollTo(_ index: Int!, animated: Bool)
+	internal func scrollTo(
+		_ index: Int!,
+		animated: Bool,
+		completion: (() -> Swift.Void)? = nil
+		)
 	{
-		if (index < 0 || index >= self.viewControllers.count) {
+		if (index < 0 || index >= self.cards.count) {
+			completion?()
 			return
 		}
 
-		if let offset = self.offsetForViewControllerAtIndex(at: index) {
-			self.scrollView.setContentOffset(offset, animated: animated)
+		if let offset = self.offsetForCardAtIndex(at: index) {
+
+			if (animated && completion != nil) {
+				// Wrap from a CATransaction in order to set the block
+				// Then use UIView animation for duration and for the
+				// changes to have effect on setContentOffset
+				CATransaction.begin()
+				CATransaction.setCompletionBlock(completion)
+				UIView.beginAnimations(nil, context: nil)
+				UIView.setAnimationDuration(self.animationDuration)
+
+				self.scrollView.contentOffset = offset
+				UIView.commitAnimations()
+				CATransaction.commit()
+			} else {
+				self.scrollView.setContentOffset(offset, animated: animated)
+			}
+
+		}
+
+		if (!animated || completion == nil) {
+			completion?()
 		}
 	}
 
@@ -304,11 +337,11 @@ import ObjectiveC
 		}
 
 		// Set-up the contraints for the view controllers
-		for viewController in self.viewControllers {
-			let index = viewControllers.index(of: viewController)!
-			let currentView = viewController.view!
+		for card in self.cards {
+			let index = self.cards.index(of: card)!
+			let currentView = card.view!
 			let previousView = index > 0
-				? viewControllers[index - 1].view
+				? self.cards[index - 1].view
 				: nil
 
 			// Set-up the new constraints
@@ -316,7 +349,7 @@ import ObjectiveC
 				currentView,
 				previousView: previousView,
 				at: index,
-				count: viewControllers.count
+				count: self.cards.count
 			)
 		}
 	}
@@ -411,7 +444,7 @@ import ObjectiveC
 	{
 		self.view.layoutIfNeeded()
 
-		if let offset = self.offsetForViewControllerAtIndex(at: self.selectedIndex) {
+		if let offset = self.offsetForCardAtIndex(at: self.selectedIndex) {
 			self.scrollView.contentOffset = offset
 			self.adjustBackgroundImageView()
 		}
@@ -420,47 +453,46 @@ import ObjectiveC
 
 // MARK: View Controllers for Cards
 
-	private var _viewControllers: [UIViewController]!
-	open var viewControllers: [UIViewController]!
+	private var _cards: [UIViewController]!
+	open var cards: [UIViewController]!
 	{
 		set
 		{
-			setViewControllers(newValue, animated: false)
+			setCards(newValue, animated: false)
 		}
 
 		get
 		{
-			return _viewControllers
+			return _cards
 		}
 	}
 
-	open func setViewControllers(_ viewControllers: [UIViewController]!, animated: Bool)
+	open func setCards(_ cards: [UIViewController]!, animated: Bool)
 	{
-		_viewControllers = viewControllers
+		_cards = cards
 		assert(self.dataSource == nil
-			|| (self.viewControllers.count == self.dataSource!.numberOfCards(in: self))
+			|| (self.cards.count == self.dataSource!.numberOfCards(in: self))
 		)
 
 		// Make the selectedIndex valid based on new cards
-		_selectedIndex = min(self.selectedIndex, self.viewControllers.count - 1)
+		_selectedIndex = min(self.selectedIndex, self.cards.count - 1)
 
 		// Add the view controllers, we will trigger a layout to place them correctly
-		self.setupViewControllers()
+		self.setupCards()
 	}
 
-	internal func setupViewControllers()
+	internal func setupCards()
 	{
 		if (!self.isViewLoaded) {
 			return
 		}
 
-		// Remove any views from the content area. This should remove all constraints
-		// from those views as well
-		var toRemove = self.contentView.subviews
+		// Keep a list of the subviews that will not be part of the new cards
+		let cardsToRemove = NSMutableArray(array: self.cards, copyItems: false)
 
 		// Add the view controllers to the scroll view's content
-		for viewController in self.viewControllers {
-			let currentView = viewController.view!
+		for card in self.cards {
+			let currentView = card.view!
 
 			// Disable the conversion of autosizing to constraints
 			currentView.translatesAutoresizingMaskIntoConstraints = false
@@ -476,14 +508,25 @@ import ObjectiveC
 				self.contentView.addSubview(currentView)
 			}
 
-			self.view.setNeedsUpdateConstraints()
+			// Setup the card
+			card.cardViewController = self
+			card.cardIndex = self.cards.index(of: card)
 
-			toRemove.remove(object: currentView)
+			// We card remove that cards from the ones we don't need anymore
+			cardsToRemove.remove(card)
 		}
 
-		toRemove.forEach({
-			$0.removeFromSuperview()
+		// Remove uneeded cards
+		cardsToRemove.forEach({
+			if let card = $0 as? UIViewController {
+				card.cardViewController = nil
+				card.cardIndex = nil
+				card.view.removeFromSuperview()
+			}
 		})
+
+		// Need a new contraints pass
+		self.view.setNeedsUpdateConstraints()
 	}
 
 
@@ -495,12 +538,12 @@ import ObjectiveC
 
 	public func scrollViewDidEndDecelerating(_ scrollView: UIScrollView)
 	{
-		self.snapToViewController(at: scrollView.contentOffset, animated: true)
+		self.snapToCard(at: scrollView.contentOffset, animated: true)
 	}
 
 	public func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView)
 	{
-		self.snapToViewController(at: scrollView.contentOffset, animated: true)
+		self.snapToCard(at: scrollView.contentOffset, animated: true)
 	}
 
 	public func scrollViewWillEndDragging(
@@ -510,10 +553,10 @@ import ObjectiveC
 	{
 		var offset : CGPoint? = targetContentOffset.pointee
 
-		let index = self.indexOfViewController(at: offset)
+		let index = self.indexOfCard(at: offset)
 		if (index != nil) {
 			_selectedIndex = index
-			offset = self.offsetForViewControllerAtIndex(at: index)
+			offset = self.offsetForCardAtIndex(at: index)
 		}
 
 		if (offset != nil) {
@@ -531,7 +574,7 @@ import ObjectiveC
 
 	public func remove(_ card: UIViewController!, animated: Bool)
 	{
-		let index = self.viewControllers.index(of: card)
+		let index = self.cards.index(of: card)
 		if (index == nil) {
 			return
 		}
@@ -549,12 +592,14 @@ import ObjectiveC
 		if (index < 0) {
 			return
 		}
-		if (index >= self.viewControllers.count) {
+		if (index >= self.cards.count) {
 			return
 		}
 
-		let removedCard = self.viewControllers.remove(at: index)
+		let removedCard = self.cards[index]
+		self.delegate?.cardViewController?(self, willRemove: removedCard, at: index)
 
+		self.cards.remove(at: index)
 		if (animated) {
 			// Remove the view from scroll view and add to main view (above background)
 			// Also set translatesAutoresizingMaskIntoConstraints to true
@@ -593,6 +638,8 @@ import ObjectiveC
 					self.view.updateConstraintsIfNeeded()
 					self.view.layoutIfNeeded()
 					self.adjustContentOffsetIfNeeded(removedCard: removedCard, at: index)
+
+					self.delegate?.cardViewController?(self, didRemove: removedCard, at: index)
 				}
 			)
 
@@ -601,12 +648,14 @@ import ObjectiveC
 			self.view.updateConstraintsIfNeeded()
 			self.view.layoutIfNeeded()
 			self.adjustContentOffsetIfNeeded(removedCard: removedCard, at: index)
+
+			self.delegate?.cardViewController?(self, didRemove: removedCard, at: index)
 		}
 	}
 
 	func adjustContentOffsetIfNeeded(removedCard: UIViewController!, at index: Int!)
 	{
-		if (index < 0 || index >= self.viewControllers.count) {
+		if (index < 0 || index >= self.cards.count) {
 			return
 		}
 
@@ -627,22 +676,22 @@ import ObjectiveC
 
 	public func add(card : UIViewController!)
 	{
-		self.insert(card: card, at: self.viewControllers.count, animated: false)
+		self.insert(card: card, at: self.cards.count, animated: false)
 	}
 
 	public func add(card : UIViewController!, animated : Bool)
 	{
-		self.insert(card: card, at: self.viewControllers.count, animated: animated)
+		self.insert(card: card, at: self.cards.count, animated: animated)
 	}
 
 	public func add()
 	{
-		self.insert(at: self.viewControllers.count, animated: false)
+		self.insert(at: self.cards.count, animated: false)
 	}
 
 	public func add(animated : Bool)
 	{
-		self.insert(at: self.viewControllers.count, animated: animated)
+		self.insert(at: self.cards.count, animated: animated)
 	}
 
 	public func insert(at index : Int)
@@ -666,16 +715,18 @@ import ObjectiveC
 
 	public func insert(card newCard: UIViewController!, at index : Int, animated : Bool)
 	{
-		if (index < 0 || index > self.viewControllers.count) {
+		if (index < 0 || index > self.cards.count) {
 			return
 		}
 
+		self.delegate?.cardViewController?(self, willInsert: newCard, at: index)
+
 		if (animated) {
 			// Compute the initial rect where the view should go
-			let rect = index < self.viewControllers.count
-				? self.viewControllers[index].view.frame
-				: self.viewControllers.count > 0
-					? self.viewControllers.last!.view.frame
+			let rect = index < self.cards.count
+				? self.cards[index].view.frame
+				: self.cards.count > 0
+					? self.cards.last!.view.frame
 					: CGRect()
 
 			// Insert the new card in the view right now, but as a autosize view
@@ -691,8 +742,8 @@ import ObjectiveC
 			t = t.scaledBy(x: 0.5, y: 0.5)
 			newCard.view.transform = t
 
-			// We can add to _viewControllers now
-			_viewControllers.insert(newCard, at: index)
+			// We can add to _cards now
+			_cards.insert(newCard, at: index)
 
 			// Now, we animate the clean-up
 			UIView.animate(
@@ -703,14 +754,16 @@ import ObjectiveC
 					newCard.view.transform = CGAffineTransform.identity
 
 					// Apply all the layout changes from earlier
-					self.setupViewControllers()
+					self.setupCards()
 					self.view.updateConstraintsIfNeeded()
 					self.view.layoutIfNeeded()
 
 					// TODO: make this eventable
 					self.adjustContentOffsetIfNeeded(addedCard: newCard, at: index)
 				},
-				completion: nil
+				completion: { _ in
+					self.delegate?.cardViewController?(self, didInsert: newCard, at: index)
+				}
 			)
 		} else {
 			self.insert(card: newCard, at: index)
@@ -719,12 +772,14 @@ import ObjectiveC
 
 			// TODO: make this eventable
 			self.adjustContentOffsetIfNeeded(addedCard: newCard, at: index)
+
+			self.delegate?.cardViewController?(self, didInsert: newCard, at: index)
 		}
 	}
 
 	func adjustContentOffsetIfNeeded(addedCard: UIViewController!, at index: Int!)
 	{
-		if (index < 0 || index >= self.viewControllers.count) {
+		if (index < 0 || index >= self.cards.count) {
 			return
 		}
 
@@ -743,13 +798,13 @@ import ObjectiveC
 
 // MARK: Utilities
 
-	internal func snapToViewController(at offset : CGPoint?, animated: Bool)
+	internal func snapToCard(at offset : CGPoint?, animated: Bool)
 	{
-		let index = self.indexOfViewController(at: offset)
-		self.snapToViewController(at: index, animated: animated)
+		let index = self.indexOfCard(at: offset)
+		self.snapToCard(at: index, animated: animated)
 	}
 
-	internal func snapToViewController(at index: Int?, animated: Bool)
+	internal func snapToCard(at index: Int?, animated: Bool)
 	{
 		if (index == nil) {
 			return
@@ -757,26 +812,26 @@ import ObjectiveC
 
 		_selectedIndex = index
 
-		if let expected = self.offsetForViewControllerAtIndex(at: index) {
+		if let expected = self.offsetForCardAtIndex(at: index) {
 			if (!expected.equalTo(self.scrollView.contentOffset)) {
 				self.scrollView.setContentOffset(expected, animated: animated)
 			}
 		}
 	}
 
-	internal func offsetForViewControllerAtIndex(at index : Int!) -> CGPoint?
+	internal func offsetForCardAtIndex(at index : Int!) -> CGPoint?
 	{
-		if (self.viewControllers.count == 0) {
+		if (self.cards.count == 0) {
 			return nil
 		}
-		if (index < 0 || index >= self.viewControllers.count) {
+		if (index < 0 || index >= self.cards.count) {
 			return nil
 		}
 		if (index == 0) {
 			return CGPoint()
 		}
 
-		let vc = self.viewControllers[index]
+		let vc = self.cards[index]
 		let frame = vc.view.frame
 
 		// Start from the current scroll view offset (in order to keep the y-axis as is)
@@ -789,7 +844,7 @@ import ObjectiveC
 		)
 	}
 
-	internal func viewController(at offset: CGPoint?) -> UIViewController?
+	internal func card(at offset: CGPoint?) -> UIViewController?
 	{
 		if (offset == nil) {
 			return nil
@@ -800,7 +855,7 @@ import ObjectiveC
 		// at the given offset
 		point.x += self.scrollView.frame.width / 2.0
 
-		for controller in self.viewControllers {
+		for controller in self.cards {
 			if let bounds = controller.view.boundsWithMargins {
 				let rect = self.scrollView.convert(bounds, from: controller.view)
 
@@ -818,11 +873,11 @@ import ObjectiveC
 		return nil
 	}
 
-	internal func indexOfViewController(at offset: CGPoint?) -> Int?
+	internal func indexOfCard(at offset: CGPoint?) -> Int?
 	{
-		let viewController = self.viewController(at: offset)
-		if (viewController != nil) {
-			return self.viewControllers.index(of: viewController!)
+		let card = self.card(at: offset)
+		if (card != nil) {
+			return self.cards.index(of: card!)
 		}
 
 		return nil
@@ -854,41 +909,16 @@ import ObjectiveC
 
 @objc public protocol BTCardViewControllerDelegate
 {
-	/// Tells the delegate that the card view controller is about to display the the view controller for a
-	/// particular card.
-	///
-	/// - Parameters:
-	///   - cardViewController: The card view controller object informing the delegate of this impending event.
-	///   - viewController: A view controller object that cardViewController is going to display.
-	///   - index: An index locating the card in cardViewController.
-	func cardViewController(
-		_ cardViewController: BTCardViewController,
-		willDisplay viewController: UIViewController,
-		at index: Int
-	)
-
-	/// Tells the delegate that the specified card is now displayed.
-	///
-	/// - Parameters:
-	///   - cardViewController: A card view controller informing the delegate about the event.
-	///   - viewController: A view controller object that cardViewController has displayed.
-	///   - index: An index locating the card in cardViewController
-	func cardViewController(
-		_ cardViewController: BTCardViewController,
-		didDisplay viewController: UIViewController,
-		at index: Int
-	)
-
-	/// Tells the delegate that the card view controller is about to select the the view controller for a
+	/// Tells the delegate that the card view controller is about to select the view controller for a
 	/// particular card.
 	///
 	/// - Parameters:
 	///   - cardViewController: The card view controller object informing the delegate of this impending event.
 	///   - viewController: A view controller object that cardViewController is going to select.
 	///   - index: An index locating the card in cardViewController.
-	func cardViewController(
-		_ cardViewController: BTCardViewController,
-		willSelect viewController: UIViewController,
+	@objc optional func cardViewController(
+		_ cardViewController: BTCardViewController!,
+		willSelect viewController: UIViewController!,
 		at index: Int
 	)
 
@@ -898,18 +928,139 @@ import ObjectiveC
 	///   - cardViewController: A card view controller informing the delegate about the event.
 	///   - viewController: A view controller object that cardViewController has selected.
 	///   - index: An index locating the card in cardViewController
-	func cardViewController(
-		_ cardViewController: BTCardViewController,
-		didSelect viewController: UIViewController,
+	@objc optional func cardViewController(
+		_ cardViewController: BTCardViewController!,
+		didSelect viewController: UIViewController!,
 		at index: Int
 	)
 
-/// MARK: TODO
-    // willRemoveCard
-	// didRemoveCard
-	// willInsertCard
-	// didInsertCard
-	// cardWillMove
-	// cardDidMove
+	/// Tells the delegate that the card view controller is about to insert the view controller for a
+	/// particular card.
+	///
+	/// - Parameters:
+	///   - cardViewController: The card view controller object informing the delegate of this impending event.
+	///   - viewController: A view controller object that cardViewController is going to insert.
+	///   - index: An index locating the card in cardViewController.
+	@objc optional func cardViewController(
+		_ cardViewController: BTCardViewController!,
+		willInsert viewController: UIViewController!,
+		at index: Int
+	)
+
+	/// Tells the delegate that the specified card is now inserted.
+	///
+	/// - Parameters:
+	///   - cardViewController: A card view controller informing the delegate about the event.
+	///   - viewController: A view controller object that cardViewController has inserted.
+	///   - index: An index locating the card in cardViewController
+	@objc optional func cardViewController(
+		_ cardViewController: BTCardViewController!,
+		didInsert viewController: UIViewController!,
+		at index: Int
+	)
+
+	/// Tells the delegate that the card view controller is about to remove the view controller for a
+	/// particular card.
+	///
+	/// - Parameters:
+	///   - cardViewController: The card view controller object informing the delegate of this impending event.
+	///   - viewController: A view controller object that cardViewController is going to remove.
+	///   - index: An index locating the card in cardViewController.
+	@objc optional func cardViewController(
+		_ cardViewController: BTCardViewController!,
+		willRemove viewController: UIViewController!,
+		at index: Int
+	)
+
+	/// Tells the delegate that the specified card is now removed.
+	///
+	/// - Parameters:
+	///   - cardViewController: A card view controller informing the delegate about the event.
+	///   - viewController: A view controller object that cardViewController has removed.
+	///   - index: An index locating the card in cardViewController
+	@objc optional func cardViewController(
+		_ cardViewController: BTCardViewController!,
+		didRemove viewController: UIViewController!,
+		at index: Int
+	)
+
+	/// Tells the delegate that the card view controller is about to move the view controller for a
+	/// particular card.
+	///
+	/// - Parameters:
+	///   - cardViewController: The card view controller object informing the delegate of this impending event.
+	///   - viewController: A view controller object that cardViewController is going to move.
+	///   - fromIndex: The original index locating the card in cardViewController.
+	///	  - toIndex: The new index locating the card in cardViewController
+	@objc optional func cardViewController(
+		_ cardViewController: BTCardViewController!,
+		willMove viewController: UIViewController!,
+		from fromIndex: Int,
+		to toIndex: Int
+	)
+
+	/// Tells the delegate that the specified card is now moved.
+	///
+	/// - Parameters:
+	///   - cardViewController: A card view controller informing the delegate about the event.
+	///   - viewController: A view controller object that cardViewController has moved.
+	///   - fromIndex: The original index locating the card in cardViewController.
+	///	  - toIndex: The new index locating the card in cardViewController
+	@objc optional func cardViewController(
+		_ cardViewController: BTCardViewController!,
+		didMove viewController: UIViewController!,
+		from fromIndex: Int,
+		to toIndex: Int
+	)
 }
 
+
+private var KEY_CARD_VIEW_CONTROLLER = "UIViewController.cardViewController"
+private var KEY_CARD_INDEX = "UIViewController.cardIndex"
+
+// MARK: UIViewController Extension for Cards
+extension UIViewController
+{
+	open var cardViewController: BTCardViewController?
+	{
+		get
+		{
+			return objc_getAssociatedObject(
+				self,
+				&KEY_CARD_VIEW_CONTROLLER
+			) as? BTCardViewController
+		}
+
+		set
+		{
+			objc_setAssociatedObject(
+				self,
+				&KEY_CARD_VIEW_CONTROLLER,
+				newValue,
+				.OBJC_ASSOCIATION_ASSIGN
+			)
+		}
+	}
+
+	open var cardIndex : Int?
+	{
+		get
+		{
+			return objc_getAssociatedObject(
+				self,
+				&KEY_CARD_INDEX
+			) as? Int
+		}
+
+		set
+		{
+			objc_setAssociatedObject(
+				self,
+				&KEY_CARD_INDEX,
+				newValue,
+				.OBJC_ASSOCIATION_RETAIN
+			)
+		}
+	}
+
+}
