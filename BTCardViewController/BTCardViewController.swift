@@ -766,7 +766,7 @@ import ObjectiveC
 				}
 			)
 		} else {
-			self.insert(card: newCard, at: index)
+			self.cards.insert(newCard, at: index)
 			self.view.updateConstraintsIfNeeded()
 			self.view.layoutIfNeeded()
 

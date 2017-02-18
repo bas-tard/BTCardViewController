@@ -382,8 +382,8 @@ class AppDelegate
 	{
 		return UIBarButtonItem(
 			barButtonSystemItem: self.animated
-				? .play
-				: .pause,
+				? .pause
+				: .play,
 			target: self,
 			action: #selector(toggleAnimated(sender:))
 		)
