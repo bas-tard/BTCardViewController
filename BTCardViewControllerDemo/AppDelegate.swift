@@ -424,7 +424,27 @@ class AppDelegate
 		let card = self.storyboard().instantiateViewController(withIdentifier: "DemoCardViewController") as! DemoCardViewController
 		card.loadView()
 
-		card.view.frame = CGRect(x: 0, y: 0, width: 192, height: 320)
+		// TODO: get this from storyboard
+		card.view.translatesAutoresizingMaskIntoConstraints = false
+		card.view.addConstraints([
+			NSLayoutConstraint(
+				item: card.view,
+				attribute: .width,
+				relatedBy: .equal,
+				toItem: nil,
+				attribute: .width,
+				multiplier: 1,
+				constant: 192),
+
+			NSLayoutConstraint(
+				item: card.view,
+				attribute: .height,
+				relatedBy: .equal,
+				toItem: nil,
+				attribute: .height,
+				multiplier: 1,
+				constant: 320),
+		])
 
 		card.dataIndex = Int(arc4random_uniform(UInt32(self.colors.count)))
 		self.setup(card: card, at: index)

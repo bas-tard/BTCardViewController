@@ -407,34 +407,6 @@ import ObjectiveC
 		currentView.setNeedsUpdateConstraints()
 	}
 
-	internal func setupSizeConstraints(_ currentView : UIView!, at index : Int!)
-	{
-		let constraintWidth = NSLayoutConstraint(
-			item: currentView,
-			attribute: .width,
-			relatedBy: .equal,
-			toItem: nil,
-			attribute: .width,
-			multiplier: 1.0,
-			constant: currentView.frame.width
-		)
-		constraintWidth.identifier = "\(BTConstraintAttributePrefix.width.rawValue)\(index!)"
-
-		let constraintHeight = NSLayoutConstraint(
-			item: currentView,
-			attribute: .height,
-			relatedBy: .equal,
-			toItem: nil,
-			attribute: .height,
-			multiplier: 1.0,
-			constant: currentView.frame.height
-		)
-		constraintHeight.identifier = "\(BTConstraintAttributePrefix.height.rawValue)\(index!)"
-
-		currentView.addConstraints([ constraintWidth, constraintHeight ])
-		NSLayoutConstraint.activate(currentView.constraints)
-	}
-
 	internal func resetContentOffset()
 	{
 		self.view.layoutIfNeeded()
@@ -488,7 +460,6 @@ import ObjectiveC
 
 		// Add the view controllers to the scroll view's content
 		for viewController in self.viewControllers {
-			let index = self.viewControllers.index(of: viewController)
 			let currentView = viewController.view!
 
 			// Disable the conversion of autosizing to constraints
@@ -500,9 +471,8 @@ import ObjectiveC
 				currentView.removeFromSuperview()
 			}
 
-			// If added for the first time, we need to set-up it's size constraint
+			// If added for the first time, we need to add to the subview
 			if (currentView.superview == nil) {
-				self.setupSizeConstraints(currentView, at: index)
 				self.contentView.addSubview(currentView)
 			}
 
@@ -700,17 +670,29 @@ import ObjectiveC
 			return
 		}
 
-		self.viewControllers.insert(newCard, at: index)
-
 		if (animated) {
-//			// Scale and translate the new card
-//			var t = CGAffineTransform(
-//				translationX: 0,
-//				y: 0 - self.view.bounds.height
-//			)
-//			t = t.scaledBy(x: 0.5, y: 0.5)
-//			newCard.view.transform = t
-//
+			// Compute the initial rect where the view should go
+			let rect = index < self.viewControllers.count
+				? self.viewControllers[index].view.frame
+				: self.viewControllers.count > 0
+					? self.viewControllers.last!.view.frame
+					: CGRect()
+
+			// Insert the new card in the view right now, but as a autosize view
+			newCard.view.translatesAutoresizingMaskIntoConstraints = true
+			newCard.view.frame = rect
+			self.contentView.insertSubview(newCard.view, at: index)
+
+			// Scale and translate the new card
+			var t = CGAffineTransform(
+				translationX: 0,
+				y: 0 - self.view.bounds.height
+			)
+			t = t.scaledBy(x: 0.5, y: 0.5)
+			newCard.view.transform = t
+
+			// We can add to _viewControllers now
+			_viewControllers.insert(newCard, at: index)
 
 			// Now, we animate the clean-up
 			UIView.animate(
@@ -721,20 +703,21 @@ import ObjectiveC
 					newCard.view.transform = CGAffineTransform.identity
 
 					// Apply all the layout changes from earlier
-					self.view.setNeedsUpdateConstraints()
-					self.view.setNeedsLayout()
+					self.setupViewControllers()
 					self.view.updateConstraintsIfNeeded()
 					self.view.layoutIfNeeded()
 
+					// TODO: make this eventable
 					self.adjustContentOffsetIfNeeded(addedCard: newCard, at: index)
 				},
 				completion: nil
 			)
 		} else {
-			self.view.setNeedsUpdateConstraints()
-			self.view.setNeedsLayout()
+			self.insert(card: newCard, at: index)
 			self.view.updateConstraintsIfNeeded()
 			self.view.layoutIfNeeded()
+
+			// TODO: make this eventable
 			self.adjustContentOffsetIfNeeded(addedCard: newCard, at: index)
 		}
 	}
